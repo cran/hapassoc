@@ -1,6 +1,7 @@
 \name{hapassoc-internal}
 \title{Internal hapassoc functions}
 \alias{EMnull}
+\alias{EMnullPHASE}
 \alias{EMvar}
 \alias{IPhi}
 \alias{IPhiGamma}

@@ -49,6 +49,10 @@ summary.EM(example.regr) # or just summary(example.regr)
 #$dispersion
 #[1] 1
 }
+\references{Burkett K, McNeney B, Graham J (2004).
+A note on inference of trait associations with SNP
+haplotypes and other attributes in generalized linear models.
+Human Heredity, In press}}
 \seealso{
 \code{\link{PreEM}},\code{\link{EM}}.
 }

@@ -1,5 +1,5 @@
 # Filename: PreEM.R
-# Version : $Id: PreEM.R,v 1.2 2004/03/24 23:55:15 mcneney Exp $
+# Version : $Id: PreEM.R,v 1.4 2004/07/30 17:34:48 sblay Exp $
 
 # HapAssoc- Inference of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -21,26 +21,37 @@
 ########################################################################
 
 PreEM <- function(dat,numSNPs,maxMissingGenos=1, pooling.tol=0.05, 
-                        zero.tol=1/(2*nrow(dat)*10)){
+                        zero.tol=1/(2*nrow(dat)*10),method="default"){
 
-  haplos.list<-RecodeHaplos(dat,numSNPs,maxMissingGenos)
+  if(method=="PHASE")
+    haplos.list<-RecodeHaplosPHASE(dat,numSNPs,maxMissingGenos)
+  else
+    haplos.list<-RecodeHaplos(dat,numSNPs,maxMissingGenos)
 
   haplotest<-FALSE; ID.check<-rep(FALSE,length(haplos.list$ID))
-  
+
   # Starting matrices, some rows/columns will be deleted if there
   # are missing haplotypes
-  
+
   newhaploDM <- haplos.list$haploDM
   newnonHaploDM <- haplos.list$nonHaploDM
-  nonHaploDMnames<-names(haplos.list$nonHaploDM) 
+  nonHaploDMnames<-names(haplos.list$nonHaploDM)
   newhaploMat <- haplos.list$haploMat
   newID <- haplos.list$ID
 
   #Run the usual EM algorithm using just the haplo information to
   #get estimates of haplotype frequencies and initial weights
-  emres<-EMnull(haplos.list)
-  newwt<-emres$wts
-  
+  if(method=="PHASE")
+  {
+    emres<-EMnullPHASE() #in phase case, emres just contains gamma
+    newwt<-haplos.list$wt  #In the phase case, we already have initial estimates given
+  }
+  else
+  {
+    emres<-EMnull(haplos.list)
+    newwt<-emres$wts
+  }
+
   zero.ind<-emres$gamma<zero.tol #flag haplos with zero frequency
   initGamma<-emres$gamma[!zero.ind]
   haplos.names<-names(initGamma)<-names(emres$gamma[!zero.ind])
@@ -67,7 +78,7 @@ PreEM <- function(dat,numSNPs,maxMissingGenos=1, pooling.tol=0.05,
     for(i in 1:length(uniqueIDs)) {
       IDsum[i]<-sum(newwt[newID==uniqueIDs[i]])
     }
-    for(i in 1:length(newwt)) {  
+    for(i in 1:length(newwt)) {
       newwt[i] <- newwt[i]/IDsum[uniqueIDs==newID[i]]
     }
   }
@@ -80,6 +91,19 @@ PreEM <- function(dat,numSNPs,maxMissingGenos=1, pooling.tol=0.05,
     newhaploDM<-data.frame(newhaploDM[,!pooling.ind],pooled=pooledDMcol)
   }
   
+# The following code converts the columns of newnonHaploDM 
+# to the right types to fix the effect of the previous 
+# matrix conversions:                         -Sigal
+j<-NULL
+for(i in 1:length(dat)) j<-c(j, class(dat[[i]]))
+for(i in 1:length(newnonHaploDM)) {
+ if (is.numeric(dat[[i]])) 
+ newnonHaploDM[[i]] <- as.numeric(as.character(newnonHaploDM[[i]]))
+ else if(is.character(dat[[i]]))
+ newnonHaploDM[[i]] <- as.character(newnonHaploDM[[i]])
+}
+
+
   return(list(nonHaploDM=newnonHaploDM, haploDM=newhaploDM,
               haploMat=newhaploMat, wt=newwt, ID=newID, 
               haplotest=haplotest, initGamma=initGamma,
@@ -150,7 +174,7 @@ EMnull<-function(haplos.list, gamma=FALSE, maxit=100, tol=1/(2*sum(haplos.list$w
         num.prob<-haplo.probs
 
 	# E step: Calculate the weights for everyone
-	# Use the ID to determine the number of pseudo-individuals in the 
+	# Use the ID to determine the number of pseudo-individuals in the
 	# denominator probability
 
 	for (i in 1:nrow(haploMat)){               
@@ -177,4 +201,37 @@ EMnull<-function(haplos.list, gamma=FALSE, maxit=100, tol=1/(2*sum(haplos.list$w
 
 isMultiHetero<-function(haplos.list) {
   return(as.numeric(haplos.list$haploMat[,1] != haplos.list$haploMat[,2]))
+}
+
+############################################################
+EMnullPHASE<-function()
+{
+	f=file("temp.out_freqs")
+	rawdat=scan(file=f,list(x=""))
+
+	#A little bit of subtlety.  One would expect that the length required for these
+	#vectors would be 2^numSNPs.  If we did not screen out some rows in
+	#handleMissingsPHASE, this would be true, however, because we do typically
+	#screen out some individuals, this changes.  Why?  Because some haplotypes
+	#with really low frequency (ie essentially 0) would only have appeared in
+	#the data from pseudo-individuals reconstructed from rows with missing data.  As
+	#we typically eliminate these rows with a lot of missing data, these pseudo-
+	#individuals are not recreated, so PHASE may have less than 2^numSNPs haplotypes.
+	#(divide by 4 since 4 columns and -1 since first row is header)
+	gammanames=rep("h",length(rawdat$x)/4-1)
+	gammavals=rep(0,length(rawdat$x)/4-1)
+
+	i=5 #the first 4 entries are just the column headers in the PHASE *.out_freqs file
+	while(!is.na(rawdat$x[i]))
+	{
+		idx=as.numeric(rawdat$x[i])
+		i=i+1
+		gammanames[idx]=paste(gammanames[idx],as.character(rawdat$x[i]),sep="")
+		i=i+1
+		gammavals[idx]=as.numeric(rawdat$x[i])
+		i=i+1
+		i=i+1 #skip over the 4th entry in the file, which is the std.err.
+	}
+	names(gammavals)=gammanames
+	return(list(gamma=gammavals))
 }

@@ -70,6 +70,10 @@ example.preEM$pooledHaplos
 names(example.preEM$haploDM)
 # "h000"   "h001"   "h010"   "h011"   "h100"   "pooled"
 }
+\references{Burkett K, McNeney B, Graham J (2004). 
+A note on inference of trait associations with SNP
+haplotypes and other attributes in generalized linear models.
+Human Heredity, In press}}
 \seealso{
 \code{\link{EM}},\code{\link{summary.EM}}.
 }

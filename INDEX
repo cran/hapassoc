@@ -1,6 +1,6 @@
 EM                      EM algorithm to fit maximum likelihood
                         estimates of trait associations with SNP
                         haplotypes
-PreEM                   Pre-process the data before fitting it with EM
 hypoDat                 Simulated data for a hypothetical binary trait
+PreEM                   Pre-process the data before fitting it with EM
 summary.EM              Summarize results of the EM function
