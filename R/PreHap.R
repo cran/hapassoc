@@ -1,5 +1,5 @@
 # Filename: PreHap.R
-# Version : $Id: PreHap.R,v 1.6 2004/09/04 21:22:40 sblay Exp $
+# Version : $Id: PreHap.R,v 1.10 2005/04/06 04:26:22 sblay Exp $
 
 # HapAssoc- Inference of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -21,13 +21,12 @@
 ########################################################################
 
 pre.hapassoc <- function(dat,numSNPs,maxMissingGenos=1, pooling.tol=0.05, 
-                        zero.tol=1/(2*nrow(dat)*10),method="default"){
+                        zero.tol=1/(2*nrow(dat)*10), allelic=TRUE){
 
-  if(method=="PHASE")
-    haplos.list<-RecodeHaplosPHASE(dat,numSNPs,maxMissingGenos)
-  else
-    haplos.list<-RecodeHaplos(dat,numSNPs,maxMissingGenos)
-
+#  if(method=="PHASE")
+#    haplos.list<-RecodeHaplosPHASE(dat,numSNPs,maxMissingGenos)
+#  else
+  haplos.list<-RecodeHaplos(dat,numSNPs,allelic,maxMissingGenos)
   haplotest<-FALSE; ID.check<-rep(FALSE,length(haplos.list$ID))
 
   # Starting matrices, some rows/columns will be deleted if there
@@ -41,25 +40,22 @@ pre.hapassoc <- function(dat,numSNPs,maxMissingGenos=1, pooling.tol=0.05,
 
   #Run the usual EM algorithm using just the haplo information to
   #get estimates of haplotype frequencies and initial weights
-  if(method=="PHASE")
-  {
-    emres<-EMnullPHASE() #in phase case, emres just contains gamma
-    newwt<-haplos.list$wt  #In the phase case, we already have initial estimates given
-  }
-  else
-  {
-    emres<-EMnull(haplos.list)
-    newwt<-emres$wts
-  }
+#  if(method=="PHASE") {
+#      emres<-EMnullPHASE() #in phase case, emres just contains gamma
+#      newwt<-haplos.list$wt  #In the phase case, we already have initial estimates given
+#  }
+#  else  {
+      emres<-EMnull(haplos.list)
+      newwt<-emres$wts
+#  }
 
-  zero.ind<-emres$gamma<zero.tol #flag haplos with zero frequency
-  initGamma<-emres$gamma[!zero.ind]
-  haplos.names<-names(initGamma)<-names(emres$gamma[!zero.ind])
-  zeroFreqHaplos<-names(emres$gamma[zero.ind])
+  initFreq<-emres$gamma[!emres$gamma<zero.tol] #haplos with non-zero frequency
+  haplos.names<-names(initFreq)
+  zeroFreqHaplos<-names(emres$gamma[emres$gamma<zero.tol])
 
-  if(sum(zero.ind)>0) { #then non-existent haplos need to be removed
+  if(sum(emres$gamma<zero.tol)>0) { #then non-existent haplos need to be removed
     haplotest<-TRUE
-    newhaploDM<-newhaploDM[,!zero.ind]
+    newhaploDM<-newhaploDM[,haplos.names]
 
     #We only want rows that sum to two - others must have involved
     #haplotypes with estimated frequency of zero
@@ -83,14 +79,15 @@ pre.hapassoc <- function(dat,numSNPs,maxMissingGenos=1, pooling.tol=0.05,
     }
   }
 
-  pooling.ind<-initGamma<pooling.tol #flag rare haplos 
+  pooling.ind<-initFreq<pooling.tol #flag rare haplos 
   pooled.haplos<-"no pooled haplos"
   if(sum(pooling.ind)>1) { #then pooling to be done *in design matrix only*
     pooled.haplos<-haplos.names[pooling.ind]
-    pooledDMcol<-rowSums(newhaploDM[,pooling.ind])
-    newhaploDM<-data.frame(newhaploDM[,!pooling.ind],pooled=pooledDMcol)
+    pooledDMcol<-rowSums(newhaploDM[,pooled.haplos])
+newhaploDM<-data.frame(newhaploDM[,haplos.names[!pooling.ind]],pooled=pooledDMcol)
+
   }
-  
+
 # The following code converts the columns of newnonHaploDM 
 # to the right types to fix the effect of the previous 
 # matrix conversions:                         -Sigal
@@ -106,7 +103,7 @@ for(i in 1:length(newnonHaploDM)) {
 
   return(list(nonHaploDM=newnonHaploDM, haploDM=newhaploDM,
               haploMat=newhaploMat, wt=newwt, ID=newID, 
-              haplotest=haplotest, initGamma=initGamma,
+              haplotest=haplotest, initFreq=initFreq,
               zeroFreqHaplos=zeroFreqHaplos,pooledHaplos=pooled.haplos))
 }
 
@@ -192,13 +189,11 @@ EMnull<-function(haplos.list, gamma=FALSE, maxit=100, tol=1/(2*sum(haplos.list$w
  }
  if(gammadiff>tol) 
    warning(paste("no convergence in EMnull after ",maxit,"iterations\n"))
- 
  results <- list(gamma=gamma, wts=wts)
-
  return(results)
-
 }
 
+############################################################
 isMultiHetero<-function(haplos.list) {
   return(as.numeric(haplos.list$haploMat[,1] != haplos.list$haploMat[,2]))
 }

@@ -1,5 +1,5 @@
 # Filename: hapassoc.R
-# Version : $Id: hapassoc.R,v 1.12 2004/11/03 23:01:34 sblay Exp $
+# Version : $Id: hapassoc.R,v 1.18 2005/04/06 20:22:59 sblay Exp $
 
 # HapAssoc- Inference of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -21,7 +21,7 @@
 ########################################################################
 
 hapassoc<-function(form, haplos.list, baseline="missing", family=binomial(), 
-             gamma=FALSE, maxit=50, tol=0.001, ...){
+             freq=FALSE, maxit=50, tol=0.001, ...){
 
  environment(form)<-environment()#set envir of formula to envir w/i hapassoc function
  column.subset <- colnames(haplos.list$haploDM)!=baseline
@@ -42,14 +42,14 @@ hapassoc<-function(form, haplos.list, baseline="missing", family=binomial(),
  haplos<-haplos.list$haploDM
  haploMat<-haplos.list$haploMat
  allHaps<-c(haploMat[,1],haploMat[,2]) #Needed later in hapassoc loop for wt calcs
- haplos.names<-names(haplos.list$initGamma)
+ haplos.names<-names(haplos.list$initFreq)
 
- # Initial gamma values, if no gamma specified use initGamma
+ # Initial freq values, if no freq specified use initFreq
 
- if (gamma!=FALSE) {
-   names(gamma)<-haplos.names
+ if (freq!=FALSE) {
+   names(freq)<-haplos.names
  } else {
-   gamma<-haplos.list$initGamma
+   freq<-haplos.list$initFreq
  }
 
  # Initial beta values calculated from augmented data set
@@ -73,7 +73,7 @@ hapassoc<-function(form, haplos.list, baseline="missing", family=binomial(),
    
         # Multiplicative const for haplo probs: 1 for homo, 2 for het
         haplo.probs<-rep(1,nrow(haplos))+isMultiHetero(haplos.list)
-        haplo.probs <- haplo.probs*gamma[haploMat[,1]]*gamma[haploMat[,2]]
+        haplo.probs <- haplo.probs*freq[haploMat[,1]]*freq[haploMat[,2]]
 
 	phi<-mlPhi(regr) #Compute ML estimate of dispersion param
         if(is.null(phi)) { #no converergence in ml estimate of phi
@@ -97,11 +97,12 @@ hapassoc<-function(form, haplos.list, baseline="missing", family=binomial(),
                     control=glm.control(epsilon=1e-08),start=beta)
         betaNew<-regr$coef
    	fits<-regr$fitted.values
-   	betadiff<-max(abs(beta-betaNew), na.rm=TRUE)#maximum diif
-   	beta<-betaNew
+	betadiff<-max( max(abs(beta-betaNew), na.rm=TRUE),
+	 max(abs(beta-betaNew)/(0.1+abs(betaNew)), na.rm=TRUE) )   	
+	beta<-betaNew
 
-	# Find the new gammas, weighted sum of haplotypes
-        gamma <- tapply(c(wts,wts),allHaps,sum)/(2*N)
+	# Find the new freqs, weighted sum of haplotypes
+        freq <- tapply(c(wts,wts),allHaps,sum)/(2*N)
 
         it<-it+1
  }
@@ -115,14 +116,16 @@ hapassoc<-function(form, haplos.list, baseline="missing", family=binomial(),
 
 
  
- #gamma is currently an array which causes problems in the calculations below
- gamma <- as.matrix(gamma) 
+ #freq is currently an array which causes problems in the calculations below
+ freq <- as.matrix(freq) 
 
- EMresults <- list(beta=beta, gamma=gamma, fits=fits, wts=wts, 
+ EMresults <- list(beta=beta, gamma=freq, fits=fits, wts=wts, 
                    glm.final.fit=regr,dispersion=phi, response=response)
+ names(haplos.list)[names(haplos.list)=="freq"] <- "gamma"
+ names(EMresults)[names(EMresults)== "freq"] <- "gamma"
  var.est <- EMvar(haplos.list, EMresults, family)
 
- ans<-list(it=it, beta=beta, gamma=gamma, fits=fits, wts=wts, ID=ID,
+ ans<-list(it=it, beta=beta, freq=freq, fits=fits, wts=wts, ID=ID,
            var=var.est, dispersionML=phi, family=family, response=response,
            converged=TRUE)
 
@@ -203,7 +206,6 @@ pYgivenX<-function(y,mu,phi,family){
 ########################################################################
 
 EMvar<-function(haplos.list, results, family)  {
-
  # Get the results of the last iteration
  beta<-results$beta[!is.na(results$beta)]
  betanames<-names(beta)
@@ -270,7 +272,6 @@ EMvar<-function(haplos.list, results, family)  {
    G1<-diag(der.gamma)
    G<-G1[,1:(num.gamma-1)]
    G[num.gamma,]<-G1[num.gamma, num.gamma]
-
 
    ## Block diagonal matrix
 
@@ -360,7 +361,7 @@ EMvar<-function(haplos.list, results, family)  {
    colnames(varEM)<-c(betanames, gammanames[1:(num.gamma-1)])
  }
  rownames(varEM)<-colnames(varEM)
-   
+
 
  return(varEM)
 

@@ -2,14 +2,21 @@
 \alias{pre.hapassoc}
 \title{Pre-process the data before fitting it with hapassoc} 
 \description{
-This function takes as an argument the original dataframe with
+This function takes as an argument a dataframe with
 non-SNP and SNP data and converts the genotype data at single SNPs
 (the single-locus genotypes) into haplotype data.
-The rows of the original data frame should correspond to
-subjects and each SNP should have two columns, one for each
-allele of the single-locus genotype. The SNP data should comprise the
-last 2*numSNPs columns.  If the haplotypes for a subject cannot be
-inferred from his or her genotype data, "pseudo-individuals"
+The rows of the input data frame should correspond to
+subjects. Single-locus SNP genotypes  may be specified in 
+one of two ways: (i) as pairs of columns, with one column for
+each allele of the single-locus genotypes (\dQuote{allelic format}),
+or (ii) as columns of two-character genotypes (\dQuote{genotypic format}).
+The SNP data should comprise the
+last 2*numSNPs columns (allelic format) or the last numSNPs columns (genotypic
+format) of the data frame. Note: at this time 
+it is up to the user to ensure \emph{all} loci are diallelic. 
+
+If the haplotypes for a subject cannot be
+inferred from his or her genotype data, ``pseudo-individuals''
 representing all possible haplotype combinations consistent with
 the single-locus genotypes are considered.
 Missing single-locus genotypes, up to a maximum of maxMissingGenos (see
@@ -23,40 +30,50 @@ are assumed not to exist and are removed from further consideration.
 the column in the design matrix corresponding to that haplotype is deleted.)
 For the remaining haplotypes, those with non-negligible frequency below a 
 user-defined pooling tolerance (pooling.tol) are pooled into a single 
-category called \"pooled\" in the design matrix for the risk model. 
+category called \dQuote{pooled} in the design matrix for the risk model. 
 However, the frequencies of each of these pooled haplotypes are 
 still calculated separately. 
 }
 
-\usage{pre.hapassoc(dat,numSNPs,maxMissingGenos=1,pooling.tol = 0.05, zero.tol = 1/(2 * nrow(dat) * 10)}
+\usage{pre.hapassoc(dat,numSNPs,maxMissingGenos=1,pooling.tol = 0.05, 
+       zero.tol = 1/(2 * nrow(dat) * 10), allelic=TRUE)}
 \arguments{
-\item{dat}{the non-SNP and SNP data as a data frame. The SNP data should comprise the last 2*numSNPs columns.}
+\item{dat}{the non-SNP and SNP data as a data frame. The SNP data should comprise the last 2*numSNPs columns (allelic format) or last numSNPs columns (genotypic format).
+Missing allelic data should be coded as \code{NA} or \code{""} and missing genotypic data should be coded as, e.g., \code{"A"} if one allele is missing and \code{""} if both alleles are missing.  }
 \item{numSNPs}{number of SNPs per haplotype}
 \item{maxMissingGenos}{maximum number of single-locus genotypes with missing data to allow for each subject. (Subjects with more missing data, or with missing non-SNP data are removed.) The default is 1.}
 \item{pooling.tol}{pooling tolerance -- by default set to 0.05}
 \item{zero.tol}{tolerance for haplotype frequencies below which haplotypes
 are assumed not to exist -- by default set to 
 \eqn{\frac{1}{2*N*10}}{1/(2*N*10)} where N is the number of subjects}
+\item{allelic}{TRUE if single-locus SNP genotypes are in allelic format and FALSE if in genotypic format; default is TRUE.}
 }
 \value{
-\item{haplotest}{T/F, true if some haplotypes were pooled in the risk model}
-\item{initGamma}{initial estimates of haplotype frequencies}
-\item{zeroFreqHaplos}{list of haplos assumed not to exist}
-\item{pooledHaplos}{list of haplos pooled into a single category in the design matrix}
-\item{nonHaploDM}{non-haplotype portion of the AUGMENTED data frame}
-\item{haploDM}{data frame with \eqn{2^{numSNPs}}{2^numSNPs} columns scoring number of copies of each haplotype for each pseudo-individual}
-\item{haploMat}{matrix with 2 columns giving haplotypes for each pseudo-individual}
+\item{haplotest}{logical, TRUE if some haplotypes were pooled in the risk model}
+\item{initFreq}{initial estimates of haplotype frequencies}
+\item{zeroFreqHaplos}{list of haplotypes assumed not to exist}
+\item{pooledHaplos}{list of haplotypes pooled into a single category in the design matrix}
+\item{haploDM}{Haplotype portion of the data frame \strong{augmented} with pseudo-individuals. Has \eqn{2^{numSNPs}}{2^numSNPs} columns scoring number of copies of each haplotype for each pseudo-individual}
+\item{nonHaploDM}{non-haplotype portion of the data frame \strong{augmented} with pseudo-individuals}
+\item{haploMat}{matrix with 2 columns listing haplotype labels for each pseudo-individual}
 \item{wt}{vector giving initial weights for each pseudo-individual for 
 the EM algorithm}
 \item{ID}{index for each individual in the original data frame. Note that all pseudo-individuals have the same ID value}
 \item{unknown}{vector indicating whether the haplotype information was missing for each row in the augmented data}
 }
+\note{When one or more subjects have missing genotype data, expect warnings
+of the form
+
+\code{row.names duplicated --> row.names NOT used in ...}
+
+These warnings can be safely ignored.}
 \examples{
+#First example data set has single-locus genotypes in "allelic format"
 data(hypoDat)
 example.pre.hapassoc<-pre.hapassoc(hypoDat, numSNPs=3)
 
 # To get the initial haplotype frequencies:
-example.pre.hapassoc$initGamma
+example.pre.hapassoc$initFreq
 #      h000       h001       h010       h011       h100       h101       h110 
 #0.25179111 0.26050418 0.23606001 0.09164470 0.10133627 0.02636844 0.01081260 
 #      h111 
@@ -69,11 +86,31 @@ example.pre.hapassoc$pooledHaplos
 
 names(example.pre.hapassoc$haploDM)
 # "h000"   "h001"   "h010"   "h011"   "h100"   "pooled"
+
+####
+#Second example data set has single-locus genotypes in "genotypic format"
+data(hypoDatGeno)
+example2.pre.hapassoc<-pre.hapassoc(hypoDatGeno, numSNPs=3, allelic=FALSE)
+
+# To get the initial haplotype frequencies:
+example2.pre.hapassoc$initFreq
+#      hAAA       hAAC       hACA       hACC       hCAA       hCAC
+#0.25179111 0.26050418 0.23606001 0.09164470 0.10133627 0.02636844
+#      hCCA           hCCC 
+#0.01081260	0.02148268 
+# The 'hAAC' haplotype is estimated to be the most frequent
+
+example2.pre.hapassoc$pooledHaplos
+#  "hCAC" "hCCA" "hCCC"
+# These haplotypes are to be pooled in the design matrix for the risk model
+
+names(example2.pre.hapassoc$haploDM)
+#  "hAAA"   "hAAC"   "hACA"   "hACC"   "hCAA"   "pooled"
 }
 \references{Burkett K, McNeney B, Graham J (2004). 
 A note on inference of trait associations with SNP
 haplotypes and other attributes in generalized linear models.
-Human Heredity, In press}}
+Human Heredity, \bold{57}:200-206}
 \seealso{
 \code{\link{hapassoc}},\code{\link{summary.hapassoc}}.
 }

@@ -1,5 +1,5 @@
 # Filename: summaryHap.R
-# Version : $Id: summaryHap.R,v 1.6 2004/09/04 21:23:18 sblay Exp $
+# Version : $Id: summaryHap.R,v 1.8 2005/04/06 20:24:32 sblay Exp $
 
 # HapAssoc- Estimation of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -21,7 +21,8 @@
 ########################################################################
 
 summary.hapassoc<-function(object, ...) {
-
+names(object)[names(object) == "freq"] <- "gamma"
+if(object$converged==FALSE) { warning("hapassoc failed to converge\n"); return() }
 family<-object$family$family
 if(family=="Gamma"){
  #For a Gamma model, use a moment rather than ML estimate of phi.

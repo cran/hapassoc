@@ -17,10 +17,26 @@
 
 ########################################################################
 
-RecodeHaplos<-function(dat,numSNPs,maxMissingGenos=1,logriskmodel="additive") {
+RecodeHaplos<-function(dat,numSNPs,allelic,maxMissingGenos=1,logriskmodel="additive") {
 
   # Split dat into nonSNP and SNP data
   ncols<-ncol(dat)
+  if(!allelic) {    # turn genetic d.f. to allelic d.f.
+      dat1<-dat[,1:(ncols-numSNPs)]
+      for(i in (ncols-numSNPs+1):ncols) {
+          dat1<-data.frame(dat1, substr(as.character(dat[,i]),1,1),
+                                 substr(as.character(dat[,i]),2,2))
+
+          names(dat1)[(length(dat1)-1):length(dat1)] <-
+             paste(names(dat)[i],".",1:2, sep="")
+      }
+      dat <- dat1
+      ncols<-ncol(dat)
+  }   
+  # Substitue empty strings "" with NA:
+  for(i in (ncols-2*numSNPs+1):ncols) {
+      dat[nchar(as.vector(dat[,i]))==0,i]<-NA
+  }
   nonsnpcols<-ncols-2*numSNPs
   snpcols<-ncols-nonsnpcols
   nonSNPdat<-dat[,1:(ncols-2*numSNPs)]
@@ -29,6 +45,35 @@ RecodeHaplos<-function(dat,numSNPs,maxMissingGenos=1,logriskmodel="additive") {
   nonSNPdat <- as.matrix(nonSNPdat)#as.data.frame(nonSNPdat)
   SNPdat<-as.matrix(dat[,(ncols-2*numSNPs+1):ncols])
 
+  for (i in seq(length=ncol(SNPdat)/2, from=1, by=2))
+       if (length(na.omit(unique(c(SNPdat[,i],SNPdat[,i+1])))) > 2)
+           stop("Number of alleles at each locus cannot surpass 2.\n")
+
+  # if SNP data are given as nucleotide letters, create SNPkey,
+  # a vector of the more frequent nucleotide in each SNP
+  # and encode SNPdat into 0's and 1's
+
+  if (mode(SNPdat[,1])=="character") {
+      SNPdatAlpha <- SNPdat
+      SNPkey <- vector("character", 0)  # most frequent nucleotide in SNP
+      SNPkey1 <- vector("character", 0) # least frequent nucleotide in SNP  
+
+      for (i in seq(length=ncol(SNPdat)/2, from=1, by=2)) {
+          nucleotide1 <- unique(na.omit(c(SNPdat[,i],SNPdat[,i+1])))[1]
+          nucleotide2 <- unique(na.omit(c(SNPdat[,i],SNPdat[,i+1])))[2]   
+          if (sum(na.omit(SNPdat[,i:(i+1)])==nucleotide1) >= sum(na.omit(SNPdat[,i:(i+1)])==nucleotide2)) {
+              SNPkey <- c(SNPkey, nucleotide1); SNPkey1<- c(SNPkey1, nucleotide2)
+          }
+          else {
+              SNPkey <- c(SNPkey, nucleotide2); SNPkey1<- c(SNPkey1, nucleotide1)
+          }
+
+          SNPdat[SNPdat[,i]==tail(SNPkey, n=1),i]<-0
+          SNPdat[SNPdat[,i+1]==tail(SNPkey, n=1),i+1]<-0
+          SNPdat[!SNPdat[,i]==0,i]<-1
+          SNPdat[!SNPdat[,i+1]==0,i+1]<-1          
+      }      
+  }
   # Pre-process input to deal with missing data
   preProcDat<-handleMissings(SNPdat,nonSNPdat,numSNPs,maxMissingGenos)
   # Note: we could get rid of these 2 as.matrix(..) typecasts if we fix up handleMissings sometime in the future - MP.nov.2003
@@ -59,8 +104,7 @@ RecodeHaplos<-function(dat,numSNPs,maxMissingGenos=1,logriskmodel="additive") {
   # Main loop to construct design matrix-- do SNP and non-SNP data separately
   # Loop over subjects and if a subject's geno data does not determine
   # haplos, enumerate all consistent haplos and add pseudo-individuals
-  # to the design matrices for each possible haplo specification
-
+  # to the design matrices for each possible haplo specification  
   for(i in 1:nrow(SNPdat)){
 
     # Function isHetero returns a vector heterovec of T's and F's
@@ -135,13 +179,37 @@ RecodeHaplos<-function(dat,numSNPs,maxMissingGenos=1,logriskmodel="additive") {
 
   #Put column names just like the old format. -Matt
   hdmnames<-makeHaploLab(0:(2^numSNPs-1),numSNPs)
+
+  if (exists("SNPkey")) {   # data file SNPs encoded with nucleotide letters
+     # fix names(haploDM):
+      for (i in 1:length(hdmnames)) {
+          for (j in 1:nchar(hdmnames[i])) {
+              if(substr(hdmnames[i],j,j)==0)
+                  substr(hdmnames[i],j,j) <- SNPkey[j]
+              else
+                  substr(hdmnames[i],j,j) <- SNPkey1[j]    
+          }
+      }
+
+      # fix haploMat:
+      for (h in 1:length(haploMat2)) {
+          for (i in 1:length(haploMat2[,h])) {
+              for (j in 2:nchar(haploMat2[i,h])) {
+                  if(substr(haploMat2[i,h],j,j)==0)
+                      substr(haploMat2[i,h],j,j) <- SNPkey[j-1]
+                  else
+                      substr(haploMat2[i,h],j,j) <- SNPkey1[j-1]    
+              }
+          }
+      }
+  }                
+
   #Only the labels with >0 column sums though
   names(haploDM)<-paste("h",hdmnames[myColSums>0],sep="")
 
   nonHaploDM<-data.frame(nonHaploDM)
   #Put column names just like the old format. -Matt
   names(nonHaploDM)<-nhdmnames
-
   return(list(nonHaploDM=nonHaploDM,haploDM=haploDM,haploMat=haploMat2,
               wt=wt, ID=ID.vec))
 }
@@ -182,7 +250,11 @@ handleMissings<-function(SNPdat,nonSNPdat,numSNPs,maxMissingGenos)
   missingGenos<-(numMissingGenos>0)
   if(any(missingGenos)) {
     # First save copies of those with missing data
-    temSNPdat<-data.frame(SNPdat[missingGenos,])
+    if(is.vector(SNPdat[missingGenos,])) # a single row
+       temSNPdat<-data.frame(matrix(SNPdat[missingGenos,], ncol=2*numSNPs))
+    else
+       temSNPdat<-data.frame(SNPdat[missingGenos,])
+
     temnonSNPdat<-data.frame(nonSNPdat[missingGenos,])
     temID<-ID[missingGenos]
 
@@ -210,7 +282,6 @@ handleMissings<-function(SNPdat,nonSNPdat,numSNPs,maxMissingGenos)
 }
 
 getPhenos<-function(snps,numSNPs,missingVec) {
-
   # Inefficient but simple approach: consider both a 0 or 1 for each NA,
   # e.g for one locus with NA/NA --> 0/0, 0/1, 1/0, 1/1.
   # Then order the alleles       --> 0/0, 0/1, 0/1, 1/1
@@ -222,11 +293,14 @@ getPhenos<-function(snps,numSNPs,missingVec) {
   k<-sum(missingVec)
   # Can use makeHaploLab to enumerate all possible alleles for missing vals
   misAlleles<-makeHaploLab(0:(2^(k)-1),numSNPs=k)
+
+
   misAlleles<-matrix(as.numeric(unlist(strsplit(misAlleles,split=""))),
                          ncol=k,byrow=TRUE) #turn labels into a numeric matrix
   numPhenos<-nrow(misAlleles)
 
   myPhenos<-matrix(NA,nrow=numPhenos,ncol=length(snps))
+
   myPhenos[,!missingVec]<-matrix(rep(knownAlleles,numPhenos),
                                  ncol=length(knownAlleles),
                                  byrow=TRUE)

@@ -5,9 +5,9 @@
 Summary function for reporting the results of the hapassoc function in a similar  
 style to the lm and glm summaries.
 }
-\usage{summary.hapassoc(object, \ldots)}
+\usage{\method{summary}{hapassoc}(object, \ldots)}
 \arguments{
-\item{object}{a list of class hapassoc}
+\item{object}{a list of class \code{hapassoc} output by the \code{\link{hapassoc}} function}
 \item{\ldots}{additional arguments to the summary function (currently unused)}
 }
 \value{
@@ -52,7 +52,7 @@ summary.hapassoc(example.regr) # or just summary(example.regr)
 \references{Burkett K, McNeney B, Graham J (2004).
 A note on inference of trait associations with SNP
 haplotypes and other attributes in generalized linear models.
-Human Heredity, In press}}
+Human Heredity, \bold{57}:200-206}
 \seealso{
 \code{\link{pre.hapassoc}},\code{\link{hapassoc}}.
 }
