@@ -24,7 +24,8 @@ RecodeHaplos<-function(dat,numSNPs,maxMissingGenos=1,logriskmodel="additive") {
   nonsnpcols<-ncols-2*numSNPs
   snpcols<-ncols-nonsnpcols
   nonSNPdat<-dat[,1:(ncols-2*numSNPs)]
-  nhdmnames=names(nonSNPdat) #save the col names for the output - they will disappear when we typecast to matrix below
+  nhdmnames=names(dat)[1:(ncols-2*numSNPs)] #save the col names for the output - they will disappear when we typecast to matrix below
+
   nonSNPdat <- as.matrix(nonSNPdat)#as.data.frame(nonSNPdat)
   SNPdat<-as.matrix(dat[,(ncols-2*numSNPs+1):ncols])
 

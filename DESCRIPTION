@@ -1,5 +1,5 @@
 Package: hapassoc
-Version: 0.2
+Version: 0.3
 Date: 2003-11-15
 Title: Likelihood inference of trait associations with SNP haplotypes and other attributes using the EM Algorithm
 Author: K. Burkett <KBurkett@mrl.ubc.ca>, B. McNeney <mcneney@sfu.ca>, J. Graham <jgraham@stat.sfu.ca>

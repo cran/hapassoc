@@ -1,5 +1,5 @@
 # Filename: EM.R
-# Version : $Id: EM.R,v 1.8 2004/03/16 05:58:26 mcneney Exp $
+# Version : $Id: EM.R,v 1.9 2004/04/10 05:49:26 mcneney Exp $
 
 # HapAssoc- Inference of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -71,6 +71,9 @@ EM<-function(form, haplos.list, baseline="missing", family=binomial(),
         haplo.probs <- haplo.probs*gamma[haploMat[,1]]*gamma[haploMat[,2]]
 
 	phi<-mlPhi(regr) #Compute ML estimate of dispersion param
+        if(is.null(phi)) { #no converergence in ml estimate of phi
+           break() #EM will throw a warning of non-convergence
+        }
         num.prob<-pYgivenX(response,fits,phi,family)*haplo.probs
 
 	# E step: Calculate the weights for everyone
@@ -160,6 +163,10 @@ mlPhiGamma<-function(myfit,maxit,tol) {
   xold<-1/phiMoment #starting value for N-R 
   while(i<=maxit && diff>tol) {
     xnew<-xold - f(xold,n,dev)/fp(xold,n)
+    if(is.na(xnew)) {
+       warning("No convergence for ML estimate of Gamma scale parameter")
+       return(NULL)
+    }
     diff<-abs(xnew-xold); xold<-xnew; i<-i+1
   }
   if(i>maxit) 
