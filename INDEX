@@ -1,8 +1,6 @@
-CheckHaplos             Estimation of Haplotype Frequencies
-EM                      Use the EM algorithm to fit maximum likelihood
+EM                      EM algorithm to fit maximum likelihood
                         estimates of trait associations with SNP
                         haplotypes
-RecodeHaplos            Recode SNP genotype data into possible
-                        haplotypes
+PreEM                   Pre-process the data before fitting it with EM
 hypoDat                 Simulated data for a hypothetical binary trait
 summary.EM              Summarize results of the EM function

@@ -89,9 +89,6 @@ RecodeHaplos<-function(dat,numSNPs,maxMissingGenos=1,logriskmodel="additive") {
       ID.vec[ididx]<-ID[i]
       ididx<-ididx+1
     }
-
-    wt<-c(wt,rep(1/numHaploComb,numHaploComb))
-
     for(j in 1:nrow(myhaplos)) {
     	haploMat[hmatidx,]<-myhaplos[j,]
 	hmatidx<-hmatidx+1
@@ -104,6 +101,19 @@ RecodeHaplos<-function(dat,numSNPs,maxMissingGenos=1,logriskmodel="additive") {
   ID.vec<-ID.vec[1:(ididx-1),]
   nonHaploDM<-nonHaploDM[1:(nhdmidx-1),]
 
+  #Now renormalize the weights to sum to 1 before returning. Only necessary if 
+  #there was missing SNP data. With missing SNPs handleMissings creates 
+  #copies of a person, one for each possible complete set of single-locus
+  #genotypes. E.g. if there is one allele of one SNP missing for a person,
+  #that person will be copied into two "people" each with weight 1.
+  for(i in 1:(ididx-1)) {
+    wt[i]<-1/sum(ID.vec==ID.vec[i])
+  }
+
+  #Only need to return the columns of haploDM that have non-zero column sums:
+  myColSums<-colSums(haploDM)
+  haploDM<-haploDM[,myColSums>0]
+
   haploDM<-data.frame(haploDM)
 
   #Here we re-format our  haploMat to be compatible with the old output format and store it
@@ -112,8 +122,8 @@ RecodeHaplos<-function(dat,numSNPs,maxMissingGenos=1,logriskmodel="additive") {
   #code is calling RecodeHaplos and making use of the output. -Matt
   n<-ncol(haploMat)
   haploMat2<-matrix(nrow=nrow(haploMat),ncol=2)
-  haploMat2[,1]<-haploMat[,1]
-  haploMat2[,2]<-haploMat[,n/2+1]
+  haploMat2[,1]<-paste("h",haploMat[,1],sep="")
+  haploMat2[,2]<-paste("h",haploMat[,n/2+1],sep="")
   for(i in 2:(n/2)) {
 	haploMat2[,1]<-paste(haploMat2[,1],haploMat[,i],sep="")
 	haploMat2[,2]<-paste(haploMat2[,2],haploMat[,i+n/2],sep="")
@@ -124,7 +134,8 @@ RecodeHaplos<-function(dat,numSNPs,maxMissingGenos=1,logriskmodel="additive") {
 
   #Put column names just like the old format. -Matt
   hdmnames<-makeHaploLab(0:(2^numSNPs-1),numSNPs)
-  names(haploDM)<-paste("n",hdmnames,sep="")
+  #Only the labels with >0 column sums though
+  names(haploDM)<-paste("h",hdmnames[myColSums>0],sep="")
 
   nonHaploDM<-data.frame(nonHaploDM)
   #Put column names just like the old format. -Matt

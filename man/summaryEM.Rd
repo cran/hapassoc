@@ -17,35 +17,39 @@ style to the lm and glm summaries.
 }
 \examples{
 data(hypoDat)
-example.haplos<-RecodeHaplos(hypoDat,2)
-example.newhaplos<-CheckHaplos(example.haplos, 2)
-example.regr <- EM(affected ~ gender + age + BMI + n00+ n01 + n11,
-                     example.newhaplos, family=binomial())
-# Summarize the results of the function EM
+example.preEM<-PreEM(hypoDat, 3)
+example.regr <- EM(affected ~ attr + h000+ h010 + h011 + h100 + pooled,
+                     example.preEM, family=binomial())
+
+# Summarize the results:
 summary.EM(example.regr) # or just summary(example.regr)
 
 # Results:
 #$coefficients
-#               Estimate Std. Error     zscore     Pr(>|z|)
-#(Intercept) -7.49563443 1.48540169 -5.0462003 4.506830e-07
-#gender      -0.21123481 0.20849812 -1.0131257 3.110001e-01
-#age          0.03774116 0.01803805  2.0923083 3.641095e-02
-#BMI          0.16280168 0.03890977  4.1840828 2.863198e-05
-#n00         -0.24241680 1.24418218 -0.1948403 8.455180e-01
-#n01         -0.26860899 0.19322030 -1.3901696 1.644774e-01
-#n11          0.42651099 0.17602854  2.4229650 1.539441e-02
+#               Estimate Std. Error      zscore   Pr(>|z|)
+#(Intercept) -1.24114270  0.7820977 -1.58694079 0.11252606
+#attr         0.74036920  0.2918205  2.53707057 0.01117844
+#h000         1.14968352  0.5942542  1.93466627 0.05303126
+#h010        -0.59318434  0.6569672 -0.90291311 0.36657201
+#h011        -0.03615243  0.9161959 -0.03945928 0.96852422
+#h100        -0.85329292  1.0203105 -0.83630709 0.40298217
+#pooled       0.38516864  0.8784283  0.43847478 0.66104215
 #
 #$frequencies
-#         Estimate  Std. Error
-#f.n00 0.009349114 0.004653122
-#f.n01 0.246650886 0.013743345
-#f.n10 0.437650886 0.015693892
-#f.n11 0.306349114 0.014638656
+#         Estimate Std. Error
+#f.h000 0.26716394 0.03933158
+#f.h001 0.25191674 0.03866739
+#f.h010 0.21997138 0.03881578
+#f.h011 0.10094795 0.02949617
+#f.h100 0.09507014 0.02371878
+#f.h101 0.02584918 0.01411881
+#f.h110 0.01779455 0.01386080
+#f.h111 0.02128613 0.01247265
 #
 #$dispersion
 #[1] 1
 }
 \seealso{
-\code{\link{RecodeHaplos}},\code{\link{CheckHaplos}},\code{\link{EM}}.
+\code{\link{PreEM}},\code{\link{EM}}.
 }
 \keyword{methods}

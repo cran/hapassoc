@@ -1,5 +1,5 @@
-# Filename: CheckHaplos.R
-# Version : $Id: CheckHaplos.R,v 1.4 2004/01/28 02:24:41 mcneney Exp $
+# Filename: PreEM.R
+# Version : $Id: PreEM.R,v 1.2 2004/03/24 23:55:15 mcneney Exp $
 
 # HapAssoc- Inference of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -20,11 +20,11 @@
 
 ########################################################################
 
-CheckHaplos <- function(haplos.list, numSNPs, pooling.tol=0.05, 
-                        zero.tol=1/(2*sum(haplos.list$wt)*10)){
+PreEM <- function(dat,numSNPs,maxMissingGenos=1, pooling.tol=0.05, 
+                        zero.tol=1/(2*nrow(dat)*10)){
 
-  haplo.vec <- makeHaploLab(0:(2^numSNPs-1), numSNPs)
-  names.haplos<-paste("n",haplo.vec,sep="")
+  haplos.list<-RecodeHaplos(dat,numSNPs,maxMissingGenos)
+
   haplotest<-FALSE; ID.check<-rep(FALSE,length(haplos.list$ID))
   
   # Starting matrices, some rows/columns will be deleted if there
@@ -43,44 +43,16 @@ CheckHaplos <- function(haplos.list, numSNPs, pooling.tol=0.05,
   
   zero.ind<-emres$gamma<zero.tol #flag haplos with zero frequency
   initGamma<-emres$gamma[!zero.ind]
-  names(initGamma)<-names(emres$gamma[!zero.ind])
+  haplos.names<-names(initGamma)<-names(emres$gamma[!zero.ind])
   zeroFreqHaplos<-names(emres$gamma[zero.ind])
 
   if(sum(zero.ind)>0) { #then non-existent haplos need to be removed
     haplotest<-TRUE
     newhaploDM<-newhaploDM[,!zero.ind]
-    haplo.vec<-haplo.vec[!zero.ind]
-  }
-  pooling.ind<-initGamma<pooling.tol #flag rare haplos 
-  pooled.haplos<-"no pooled haplos"
-  if(sum(pooling.ind)>1) { #then there is pooling to be done
-    pooled.haplos<-haplo.vec[pooling.ind]
-    #Recode pooled haplos in haploMat as "pooled"
-    newhaploMat[isIn(newhaploMat[,1],pooled.haplos),1]<-"pooled"
-    newhaploMat[isIn(newhaploMat[,2],pooled.haplos),2]<-"pooled"
-    #Sum pooled columns of haploDM
-    pooledDMcol<-apply(newhaploDM[,pooling.ind],1,sum)
-    newhaploDM<-data.frame(newhaploDM[,!pooling.ind],pooled=pooledDMcol)
-    pooled.freq<-sum(initGamma[pooling.ind])
-    temNames<-names(initGamma[!pooling.ind])
-    initGamma<-c(initGamma[!pooling.ind],pooled.freq)
-    names(initGamma)<-c(temNames,"pooled")
-  }
-    
-  if(sum(zero.ind)>0 | sum(pooling.ind)>1) {
-    #Some rows of haploDM may now be duplicates. Find the
-    #ones that aren't as these will be in the final matrices output by
-    #CheckHaplos
-    uniqueIDs<-unique(newID)
-    finalMatInd<-NULL
-    for (i in 1:length(uniqueIDs) ){
-      IDind<-(newID==uniqueIDs[i])
-      duplicatesInd<-duplicated(newhaploDM[IDind,]) #built-in R func duplicated
-      finalMatInd<-c(finalMatInd,!duplicatesInd)
-    }
-    #Also, we only want rows that sum to two - others must have involved
+
+    #We only want rows that sum to two - others must have involved
     #haplotypes with estimated frequency of zero
-    finalMatInd<-( finalMatInd & (rowSums(newhaploDM) == 2) )
+    finalMatInd<- (rowSums(newhaploDM) == 2)
 
     newhaploDM<-newhaploDM[finalMatInd,]
     newhaploMat<-newhaploMat[finalMatInd,]
@@ -98,8 +70,14 @@ CheckHaplos <- function(haplos.list, numSNPs, pooling.tol=0.05,
     for(i in 1:length(newwt)) {  
       newwt[i] <- newwt[i]/IDsum[uniqueIDs==newID[i]]
     }
+  }
 
-    ID.check <- isMissing(newID) # check if an ID has been completely deleted
+  pooling.ind<-initGamma<pooling.tol #flag rare haplos 
+  pooled.haplos<-"no pooled haplos"
+  if(sum(pooling.ind)>1) { #then pooling to be done *in design matrix only*
+    pooled.haplos<-haplos.names[pooling.ind]
+    pooledDMcol<-rowSums(newhaploDM[,pooling.ind])
+    newhaploDM<-data.frame(newhaploDM[,!pooling.ind],pooled=pooledDMcol)
   }
   
   return(list(nonHaploDM=newnonHaploDM, haploDM=newhaploDM,
@@ -136,8 +114,7 @@ isIn <- function(vec,vecElements) {
 
 EMnull<-function(haplos.list, gamma=FALSE, maxit=100, tol=1/(2*sum(haplos.list$wt)*100)){
 
- haplos <- haplos.list$haploDM
- haplos.names <- colnames(haplos)
+ haploMat <- haplos.list$haploMat
 
  ID <- haplos.list$ID
  # N<-ID[length(ID)]
@@ -146,50 +123,51 @@ EMnull<-function(haplos.list, gamma=FALSE, maxit=100, tol=1/(2*sum(haplos.list$w
  
  # Initial gamma values, if no gamma specified, calculate gamma values based
  # on augmented dataset.
- num<-nrow(haplos) 
 
- if (gamma!=FALSE) { names(gamma)<-haplos.names }
+ # We should avoid using the design matrix from an additive risk model to
+ # help with haplotype frequency calculations. The following used to use
+ # gamma <- (t(haplos)%*%wts)/(2*N)   where haplos is the additive model
+ # design matrix as a computational trick to get haplotype frequencies.
+ # Now use the tapply function and the haplotypes in haploMat to sum wts .
+
  if (gamma==FALSE){
-	gamma <- (t(haplos)%*%wts)/(2*N)
- 	names(gamma)<-haplos.names
+    allHaps<-c(haploMat[,1],haploMat[,2])
+    allWts<-c(wts,wts)
+    gamma<-tapply(allWts,allHaps,sum)/(2*N)
  }
 
  gammadiff<-1
  it<-1
- num.prob<-vector(length=nrow(haplos))
+ num.prob<-vector(length=nrow(haploMat))
  
  # The EM loop
 
  while ( (it<maxit) && (gammadiff>tol) ){
    
         # multiplicative constant = 2 for heterozyg 1 for homozyg
-        haplo.probs<-rep(1,nrow(haplos))+as.numeric(isMultiHetero(haplos.list))
-	for (i in 1:length(gamma)){
-          haplo.probs <- haplo.probs*gamma[i]^haplos[,i]
-        }
+        haplo.probs<-rep(1,nrow(haploMat))+isMultiHetero(haplos.list)
+        haplo.probs <- haplo.probs*gamma[haploMat[,1]]*gamma[haploMat[,2]]
         num.prob<-haplo.probs
 
 	# E step: Calculate the weights for everyone
 	# Use the ID to determine the number of pseudo-individuals in the 
 	# denominator probability
 
-	for (i in 1:nrow(haplos)){               
+	for (i in 1:nrow(haploMat)){               
 		pseudo.index<-ID==ID[i]
                 wts[i] <- num.prob[i]/sum(num.prob[pseudo.index])
         }
 
 	# M step: Find new estimates using weighted haplotype counts
-	gammaNew <- (t(haplos)%*%wts)/(2*N)
+        allWts<-c(wts,wts)
+	gammaNew <- tapply(allWts,allHaps,sum)/(2*N)
    	gammadiff<-max(abs(gamma-gammaNew), na.rm=TRUE)#maximum diff
    	gamma<-gammaNew
 
         it<-it+1
  }
- if(it==maxit) 
+ if(gammadiff>tol) 
    warning(paste("no convergence in EMnull after ",maxit,"iterations\n"))
- gammaNames<-dimnames(gamma)[[1]]
- gamma<-as.vector(gamma)
- names(gamma)<-gammaNames
  
  results <- list(gamma=gamma, wts=wts)
 

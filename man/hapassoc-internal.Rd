@@ -22,6 +22,7 @@
 \alias{mlPhiGamma}
 \alias{momentPhiGamma}
 \alias{pYgivenX}
+\alias{RecodeHaplos}
 \description{Internal hapassoc functions.}
 \details{These are not to be called by the user or are undocumented.}
 \keyword{internal}

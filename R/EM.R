@@ -1,5 +1,5 @@
 # Filename: EM.R
-# Version : $Id: EM.R,v 1.3 2004/01/28 02:25:30 mcneney Exp $
+# Version : $Id: EM.R,v 1.8 2004/03/16 05:58:26 mcneney Exp $
 
 # HapAssoc- Inference of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -35,13 +35,12 @@ EM<-function(form, haplos.list, baseline="missing", family=binomial(),
  wts<-haplos.list$wt
  
  # Get the haplotype columns
- cols<-colnames(hdat)
  haplos<-haplos.list$haploDM
- haplos.names<-colnames(haplos)
+ haploMat<-haplos.list$haploMat
+ allHaps<-c(haploMat[,1],haploMat[,2]) #Needed later in EM loop for wt calcs
+ haplos.names<-names(haplos.list$initGamma)
 
- # Initial gamma values, if no gamma specified, calculate gamma values based
- # on augmented dataset.
- num<-nrow(hdat) 
+ # Initial gamma values, if no gamma specified use initGamma
 
  if (gamma!=FALSE) {
    names(gamma)<-haplos.names
@@ -68,10 +67,9 @@ EM<-function(form, haplos.list, baseline="missing", family=binomial(),
 	# otherwise it is the fitted value 
    
         # Multiplicative const for haplo probs: 1 for homo, 2 for het
-        haplo.probs<-rep(1,nrow(haplos))+as.numeric(isMultiHetero(haplos.list))
-	for (i in 1:length(gamma)){
-          haplo.probs <- haplo.probs*gamma[i]^haplos[,i]
-        }
+        haplo.probs<-rep(1,nrow(haplos))+isMultiHetero(haplos.list)
+        haplo.probs <- haplo.probs*gamma[haploMat[,1]]*gamma[haploMat[,2]]
+
 	phi<-mlPhi(regr) #Compute ML estimate of dispersion param
         num.prob<-pYgivenX(response,fits,phi,family)*haplo.probs
 
@@ -95,17 +93,30 @@ EM<-function(form, haplos.list, baseline="missing", family=binomial(),
    	beta<-betaNew
 
 	# Find the new gammas, weighted sum of haplotypes
-	gamma <- (t(haplos)%*%wts)/(2*N)
+        gamma <- tapply(c(wts,wts),allHaps,sum)/(2*N)
 
         it<-it+1
  }
  
+ if(betadiff>tol) { #did not converge
+    warning(paste("No convergence in EM in",it,"iterations\n")) 
+    ans<-list(converged=FALSE)
+    class(ans)<-"EM"
+    return(ans)
+ }
+
+
+ 
+ #gamma is currently an array which causes problems in the calculations below
+ gamma <- as.matrix(gamma) 
+
  EMresults <- list(beta=beta, gamma=gamma, fits=fits, wts=wts, 
                    glm.final.fit=regr,dispersion=phi, response=response)
  var.est <- EMvar(haplos.list, EMresults, family)
 
  ans<-list(it=it, beta=beta, gamma=gamma, fits=fits, wts=wts, ID=ID,
-           var=var.est, dispersionML=phi, family=family, response=response)
+           var=var.est, dispersionML=phi, family=family, response=response,
+           converged=TRUE)
 
  class(ans)<-"EM"
  return(ans)
@@ -215,8 +226,15 @@ EMvar<-function(haplos.list, results, family)  {
    Xreg.mis<-Xreg[missing,]
 
    ## Haplotype matrix
+   #Instead of assuming the glm model is additive in the haplotypes, 
+   #make the Xgen matrix from scratch here. Used to be
+   #   Xgen<-as.matrix(haplos.list$haploDM)
+   haploMat<-haplos.list$haploMat
+   #each application of outer in next line returns a matrix of T/F with
+   # (i,j)th element true if haploMat[i,k]==gammanames[j]; k=1,2
+   #Adding these T/F matrices coerces to 1/0 s first before adding
+   Xgen<-outer(haploMat[,1],gammanames,"==")+outer(haploMat[,2],gammanames,"==")
 
-   Xgen<-haplos.list$haploDM
    Xgen.mis <- as.matrix(Xgen[missing,])
  
    ## Weight matrices

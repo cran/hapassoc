@@ -1,28 +1,31 @@
 \name{EM}
 \alias{EM}
-\title{Use the EM algorithm to fit maximum likelihood estimates of trait associations with SNP haplotypes}
+\title{EM algorithm to fit maximum likelihood estimates of trait associations with SNP haplotypes}
 \description{
-This function takes a data set of haplotypes in which rows for
+This function takes a dataset of haplotypes in which rows for
 individuals of uncertain phase have been augmented by "pseudo-individuals"
-carrying consistent multilocus genotypes.
-The function uses the EM algorithm to find
+who carry the possible multilocus genotypes consistent with
+the single-locus phenotypes.  The EM algorithm is used to find
 MLE's for trait associations with covariates in generalized linear models.
 }
 \usage{EM(form,haplos.list,baseline = "missing" ,family = binomial(),
 gamma = FALSE, maxit = 50, tol = 0.001, \ldots)}
 \arguments{
 \item{form}{model equation in usual R format}
-\item{haplos.list}{list of haplotype data from \code{\link{CheckHaplos}}}
+\item{haplos.list}{list of haplotype data from \code{\link{PreEM}}}
 \item{baseline}{optional, haplotype to be used for baseline coding. Default
 is the most frequent haplotype.}
 \item{family}{binomial, poisson, gaussian or gamma are supported, default=binomial}
-\item{gamma}{initial values for haplotype frequencies, default values are calculated in \code{\link{CheckHaplos}} using the standard haplotype-counting EM algorithm without adjustment for non-haplotype covariates}
+\item{gamma}{initial estimates of haplotype frequencies, default values are calculated in \code{\link{PreEM}} using standard haplotype-counting 
+(i.e. EM algorithm without adjustment for non-haplotype covariates)}
 \item{maxit}{maximum iterations of the EM loop, default=50}
-\item{tol}{convergence tolerance in terms of the maximum difference in parameter estimates between interations; default=0.001}
-\item{\ldots}{additional arguments to be passed to the glm function such as starting values}
+\item{tol}{convergence tolerance in terms of the maximum difference in 
+parameter estimates between interations; default=0.001}
+\item{\ldots}{additional arguments to be passed to the glm function such 
+as starting values for parameter estimates in the risk model}
 }
 \value{
-\item{it}{number of iterations}
+\item{it}{number of iterations of the EM algorithm}
 \item{beta}{estimated regression coefficients}
 \item{gamma}{estimated haplotype frequencies}
 \item{fits}{fitted values of the trait}
@@ -31,21 +34,27 @@ conditional probabilities of each multilocus genotype given the observed
 single-locus genotypes.}
 \item{var}{joint variance-covariance matrix of the estimated regression
 coefficients and the estimated haplotype frequencies}
-\item{dispersionML}{maximum likelihood estimate of dispersion parameter}
-\item{family}{family of the generalized linear model fit (e.g. binomial, gaussian, etc.)}
+\item{dispersionML}{maximum likelihood estimate of dispersion parameter 
+(to get the moment estimate, use \code{\link{summary.EM}})}
+\item{family}{family of the generalized linear model (e.g. binomial, 
+gaussian, etc.)}
 \item{response}{trait value}
+\item{converged}{TRUE/FALSE indicator of convergence. If the algorithm 
+fails to converge, only the converged indicator is returned.}
 }
 \examples{
 data(hypoDat)
-example.haplos<-RecodeHaplos(hypoDat,2)
-example.newhaplos<-CheckHaplos(example.haplos, 2)
+example.preEM<-PreEM(hypoDat, 3)
 
-# Logistic regression, baseline group: '10/10'
+names(example.preEM$haploDM)
+# "h000"   "h001"   "h010"   "h011"   "h100"   "pooled"
 
-example.regr <- EM(affected ~ gender + age + BMI + n00+ n01 + n11,
-                     example.newhaplos, family=binomial())
+# Logistic regression, baseline group: '001/001'
+
+example.regr <- EM(affected ~ attr + h000+ h010 + h011 + h100 + pooled,
+                     example.preEM, family=binomial())
 }
 \seealso{
-\code{\link{RecodeHaplos}},\code{\link{CheckHaplos}},\code{\link{summary.EM}},\code{\link{glm}},\code{\link{family}}.
+\code{\link{PreEM}},\code{\link{summary.EM}},\code{\link{glm}},\code{\link{family}}.
 }
 \keyword{methods}
