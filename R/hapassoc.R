@@ -1,5 +1,5 @@
 # Filename: hapassoc.R
-# Version : $Id: hapassoc.R,v 1.11 2004/09/04 21:21:40 sblay Exp $
+# Version : $Id: hapassoc.R,v 1.12 2004/11/03 23:01:34 sblay Exp $
 
 # HapAssoc- Inference of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -26,7 +26,11 @@ hapassoc<-function(form, haplos.list, baseline="missing", family=binomial(),
  environment(form)<-environment()#set envir of formula to envir w/i hapassoc function
  column.subset <- colnames(haplos.list$haploDM)!=baseline
  hdat <- cbind(haplos.list$nonHaploDM, haplos.list$haploDM[,column.subset])
- response<-model.response(model.frame(form,data=hdat)) 
+ # We used to use model.response to extract the response variable, but
+ # this lead to problems in calculating the residuals in the pYgivenX function.
+ # It is better to fit the model with the glm function below and then 
+ # extract the response from the fitted model object - Brad Nov.2/04
+ # response<-model.response(model.frame(form,data=hdat))  
  colnames(hdat)<- c(colnames(haplos.list$nonHaploDM),
                     colnames(haplos.list$haploDM[,column.subset]))
  ID <- haplos.list$ID
@@ -52,6 +56,7 @@ hapassoc<-function(form, haplos.list, baseline="missing", family=binomial(),
  # The ... in the following call to glm allows user to pass other args to glm
 
  regr<-glm(form, family=family, data=hdat,...) 
+ response<-regr$y #Change added Nov.2/04 to extract response from fitted model
  beta<-regr$coef
  fits<-regr$fitted.values
  betadiff<-1

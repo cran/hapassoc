@@ -200,7 +200,7 @@ handleMissings<-function(SNPdat,nonSNPdat,numSNPs,maxMissingGenos)
       numPhenos<-nrow(completePhenos)
       for(j in 1:numPhenos) { #loop over complete phenos consistent w/ obs data
         SNPdat<-rbind(SNPdat,completePhenos[j,])
-        nonSNPdat<-rbind(nonSNPdat,temnonSNPdat[i,])
+        nonSNPdat<-data.frame(rbind(as.matrix(nonSNPdat),as.matrix(temnonSNPdat[i,])))
         ID <- c(ID,temID[i])
       }
     } # end loop over subjects with missing data
