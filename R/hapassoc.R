@@ -1,5 +1,5 @@
-# Filename: EM.R
-# Version : $Id: EM.R,v 1.9 2004/04/10 05:49:26 mcneney Exp $
+# Filename: hapassoc.R
+# Version : $Id: hapassoc.R,v 1.11 2004/09/04 21:21:40 sblay Exp $
 
 # HapAssoc- Inference of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -20,10 +20,10 @@
 
 ########################################################################
 
-EM<-function(form, haplos.list, baseline="missing", family=binomial(), 
+hapassoc<-function(form, haplos.list, baseline="missing", family=binomial(), 
              gamma=FALSE, maxit=50, tol=0.001, ...){
 
- environment(form)<-environment()#set envir of formula to envir w/i EM function
+ environment(form)<-environment()#set envir of formula to envir w/i hapassoc function
  column.subset <- colnames(haplos.list$haploDM)!=baseline
  hdat <- cbind(haplos.list$nonHaploDM, haplos.list$haploDM[,column.subset])
  response<-model.response(model.frame(form,data=hdat)) 
@@ -37,7 +37,7 @@ EM<-function(form, haplos.list, baseline="missing", family=binomial(),
  # Get the haplotype columns
  haplos<-haplos.list$haploDM
  haploMat<-haplos.list$haploMat
- allHaps<-c(haploMat[,1],haploMat[,2]) #Needed later in EM loop for wt calcs
+ allHaps<-c(haploMat[,1],haploMat[,2]) #Needed later in hapassoc loop for wt calcs
  haplos.names<-names(haplos.list$initGamma)
 
  # Initial gamma values, if no gamma specified use initGamma
@@ -58,7 +58,7 @@ EM<-function(form, haplos.list, baseline="missing", family=binomial(),
  it<-1
  num.prob<-vector(length=nrow(hdat))
  
- # The EM loop
+ # The hapassoc loop
 
  while ( (it<maxit) && (betadiff>tol) ){
    
@@ -72,7 +72,7 @@ EM<-function(form, haplos.list, baseline="missing", family=binomial(),
 
 	phi<-mlPhi(regr) #Compute ML estimate of dispersion param
         if(is.null(phi)) { #no converergence in ml estimate of phi
-           break() #EM will throw a warning of non-convergence
+           break() #hapassoc will throw a warning of non-convergence
         }
         num.prob<-pYgivenX(response,fits,phi,family)*haplo.probs
 
@@ -102,9 +102,9 @@ EM<-function(form, haplos.list, baseline="missing", family=binomial(),
  }
  
  if(betadiff>tol) { #did not converge
-    warning(paste("No convergence in EM in",it,"iterations\n")) 
+    warning(paste("No convergence in hapassoc in",it,"iterations\n")) 
     ans<-list(converged=FALSE)
-    class(ans)<-"EM"
+    class(ans)<-"hapassoc"
     return(ans)
  }
 
@@ -121,12 +121,12 @@ EM<-function(form, haplos.list, baseline="missing", family=binomial(),
            var=var.est, dispersionML=phi, family=family, response=response,
            converged=TRUE)
 
- class(ans)<-"EM"
+ class(ans)<-"hapassoc"
  return(ans)
 
 }
 
-## Other functions called in EM:
+## Other functions called in hapassoc:
 
 ########################################################################
 

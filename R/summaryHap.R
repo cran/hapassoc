@@ -1,5 +1,5 @@
-# Filename: summaryEM.R
-# Version : $Id: summaryEM.R,v 1.5 2004/01/25 20:21:13 mcneney Exp $
+# Filename: summaryHap.R
+# Version : $Id: summaryHap.R,v 1.6 2004/09/04 21:23:18 sblay Exp $
 
 # HapAssoc- Estimation of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -20,7 +20,7 @@
 
 ########################################################################
 
-summary.EM<-function(object, ...) {
+summary.hapassoc<-function(object, ...) {
 
 family<-object$family$family
 if(family=="Gamma"){
@@ -58,7 +58,7 @@ dimnames(freq.table)<-list(
 return(list(coefficients=coef.table,frequencies=freq.table,
             dispersion=dispersion))
 }
-## Other functions called in summary.EM
+## Other functions called in summary.hapassoc
 
 ########################################################################
 

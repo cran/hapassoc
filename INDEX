@@ -1,6 +1,7 @@
-EM                      EM algorithm to fit maximum likelihood
+hapassoc                hapassoc algorithm to fit maximum likelihood
                         estimates of trait associations with SNP
                         haplotypes
 hypoDat                 Simulated data for a hypothetical binary trait
-PreEM                   Pre-process the data before fitting it with EM
-summary.EM              Summarize results of the EM function
+pre.hapassoc            Pre-process the data before fitting it with
+                        hapassoc
+summary.hapassoc        Summarize results of the hapassoc function

@@ -1,6 +1,6 @@
-\name{PreEM}
-\alias{PreEM}
-\title{Pre-process the data before fitting it with EM} 
+\name{pre.hapassoc}
+\alias{pre.hapassoc}
+\title{Pre-process the data before fitting it with hapassoc} 
 \description{
 This function takes as an argument the original dataframe with
 non-SNP and SNP data and converts the genotype data at single SNPs
@@ -28,7 +28,7 @@ However, the frequencies of each of these pooled haplotypes are
 still calculated separately. 
 }
 
-\usage{PreEM(dat,numSNPs,maxMissingGenos=1,pooling.tol = 0.05, zero.tol = 1/(2 * nrow(dat) * 10)}
+\usage{pre.hapassoc(dat,numSNPs,maxMissingGenos=1,pooling.tol = 0.05, zero.tol = 1/(2 * nrow(dat) * 10)}
 \arguments{
 \item{dat}{the non-SNP and SNP data as a data frame. The SNP data should comprise the last 2*numSNPs columns.}
 \item{numSNPs}{number of SNPs per haplotype}
@@ -53,21 +53,21 @@ the EM algorithm}
 }
 \examples{
 data(hypoDat)
-example.preEM<-PreEM(hypoDat, numSNPs=3)
+example.pre.hapassoc<-pre.hapassoc(hypoDat, numSNPs=3)
 
 # To get the initial haplotype frequencies:
-example.preEM$initGamma
+example.pre.hapassoc$initGamma
 #      h000       h001       h010       h011       h100       h101       h110 
 #0.25179111 0.26050418 0.23606001 0.09164470 0.10133627 0.02636844 0.01081260 
 #      h111 
 #0.02148268 
 # The '001' haplotype is estimated to be the most frequent
 
-example.preEM$pooledHaplos
+example.pre.hapassoc$pooledHaplos
 # "h101" "h110" "h111"
 # These haplotypes are to be pooled in the design matrix for the risk model
 
-names(example.preEM$haploDM)
+names(example.pre.hapassoc$haploDM)
 # "h000"   "h001"   "h010"   "h011"   "h100"   "pooled"
 }
 \references{Burkett K, McNeney B, Graham J (2004). 
@@ -75,6 +75,6 @@ A note on inference of trait associations with SNP
 haplotypes and other attributes in generalized linear models.
 Human Heredity, In press}}
 \seealso{
-\code{\link{EM}},\code{\link{summary.EM}}.
+\code{\link{hapassoc}},\code{\link{summary.hapassoc}}.
 }
 \keyword{methods}

@@ -1,13 +1,13 @@
-\name{summary.EM}
-\alias{summary.EM}
-\title{Summarize results of the EM function}
+\name{summary.hapassoc}
+\alias{summary.hapassoc}
+\title{Summarize results of the hapassoc function}
 \description{
-Summary function for reporting the results of the EM function in a similar  
+Summary function for reporting the results of the hapassoc function in a similar  
 style to the lm and glm summaries.
 }
-\usage{summary.EM(object, \ldots)}
+\usage{summary.hapassoc(object, \ldots)}
 \arguments{
-\item{object}{a list of class EM}
+\item{object}{a list of class hapassoc}
 \item{\ldots}{additional arguments to the summary function (currently unused)}
 }
 \value{
@@ -17,12 +17,12 @@ style to the lm and glm summaries.
 }
 \examples{
 data(hypoDat)
-example.preEM<-PreEM(hypoDat, 3)
-example.regr <- EM(affected ~ attr + h000+ h010 + h011 + h100 + pooled,
-                     example.preEM, family=binomial())
+example.pre.hapassoc<-pre.hapassoc(hypoDat, 3)
+example.regr <- hapassoc(affected ~ attr + h000+ h010 + h011 + h100 + pooled,
+                     example.pre.hapassoc, family=binomial())
 
 # Summarize the results:
-summary.EM(example.regr) # or just summary(example.regr)
+summary.hapassoc(example.regr) # or just summary(example.regr)
 
 # Results:
 #$coefficients
@@ -54,6 +54,6 @@ A note on inference of trait associations with SNP
 haplotypes and other attributes in generalized linear models.
 Human Heredity, In press}}
 \seealso{
-\code{\link{PreEM}},\code{\link{EM}}.
+\code{\link{pre.hapassoc}},\code{\link{hapassoc}}.
 }
 \keyword{methods}

@@ -1,5 +1,5 @@
-# Filename: PreEM.R
-# Version : $Id: PreEM.R,v 1.4 2004/07/30 17:34:48 sblay Exp $
+# Filename: PreHap.R
+# Version : $Id: PreHap.R,v 1.6 2004/09/04 21:22:40 sblay Exp $
 
 # HapAssoc- Inference of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -20,7 +20,7 @@
 
 ########################################################################
 
-PreEM <- function(dat,numSNPs,maxMissingGenos=1, pooling.tol=0.05, 
+pre.hapassoc <- function(dat,numSNPs,maxMissingGenos=1, pooling.tol=0.05, 
                         zero.tol=1/(2*nrow(dat)*10),method="default"){
 
   if(method=="PHASE")
