@@ -1,0 +1,20 @@
+citHeader("To cite hapassoc in publications use:")
+
+citEntry(entry="Article",
+         title = "A note on inference of trait associations with SNP
+         haplotypes and other attributes in generalized linear models.",
+         author = personList(as.person("K. Burkett"),
+                             as.person("B. McNeney"),
+                             as.person("J. Graham")),
+         journal = "Hum Hered",
+         volume      = 57,
+         year         = 2004,
+         pages       ="200--206",
+         url          = "http://stat-db.stat.sfu.ca/hapassoc",
+
+         textVersion =
+       paste("Burkett K, McNeney B and Graham J (2004).",                 
+     "A note on inference of trait associations with SNP haplotypes       
+     and other attributes in generalized linear models.",                 
+     "Hum Hered, 57:200-206")
+)

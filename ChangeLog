@@ -1,0 +1,88 @@
+2005-05-31 Version 0.6-2
+* handleMissings(): fixed a bug for SNPs with a rare allele that is in no
+  instance in a homozygous state.
+
+2005-05-09 Version 0.6-1
+
+* Added this ChangeLog file
+* Added inst/CITATION file
+
+2005-04-06 Version 0.6
+
+* RecodeHaplos(): Allow input SNP data as alphabetic alleles (e.g.A,G,C,T),
+  and for genotypes to be input either in a single two-character column
+  ("genotypic format"), or as a pair of columns (the original "allelic
+  format" from earlier versions of hapassoc)
+
+* pre.hapassoc(): Added allelic argument to indicate whether SNP data are
+  input in either genotypic fromat or allelic format
+
+* RecodeHaplos(): Check for the number of alleles at each locus. If the
+  check finds loci with >2 alleles, stop execution and print an error
+  message that tells the user that only diallelic loci are allowed.
+
+* RecodeHaplos(): Convert all missing data in "" format to NA.
+
+* happasoc(): The convergence criteria for the EM algorithm has been
+  tightened. We now require both absolute and relative changes in the
+  parameter estimates from one iteration to the next to be below the
+  user-specified tolerance.
+
+* summary.hapassoc(): Added a check for converged FALSE, and now print a
+  warning (used to just give a cryptic error).
+
+* happasoc(): Changed the name of the variable 'gamma' to 'freq' and the
+  name of the variable 'initGamma' to initFreq'
+* pre.hapassoc(): Changed the name of the returned variable 'initGamma' to
+  'initFreq'
+
+pre.hapassoc man page 
+
+* pre.hapassoc(): Added a new example of how to use pre.hapassoc with SNPs
+  in the new genotypic format
+
+* Added documentation to describe how single-locus genotypes may now be
+  specified as a single two-character column ("genotypic format") in the
+  input data frame
+
+* Added a Note to alert users to ignore the possible warnings related to
+  row.names being duplicated when there are missing genotypes on some of the
+  loci for an individual
+
+* Updated the reference to Burkett et al. to give journal volume and page
+  numbers
+
+hapassoc man page
+
+* Added a Note to alert users to the warning they'll see when fitting
+  logistic regression models (non-integer #successes...)
+
+* Added more comments to the examples to make the coding of columns in
+  haploDM more obvious, and added an example of a non-multiplicative
+  logistic regression model
+
+* Updated the reference to Burkett et al.
+
+summary.hapassoc man page
+
+* Updated the reference to Burkett et al.
+
+
+2004-11-03 Version 0.5-1
+
+* handleMissings() assignment to nonSNPdat changed to accomodate rbind of
+  data frames which contain factors.
+
+* hapassoc(): Assigned  response<-regr$y  
+  We used to use model.response to extract the response variable, but this
+  lead to problems in calculating the residuals in the pYgivenX function.
+  It is better to fit the model with the glm function (see code) and then
+  extract the response from the fitted model object
+
+
+2004-09-29 Version 0.5
+
+* Changed file name from PreEM.R to PreHap.R
+* Changed function name from EM to hapassoc
+* Changed function name from PreEM to pre.hapassoc
+* changed function name from summary.EM to summary.hapassoc

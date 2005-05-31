@@ -74,6 +74,7 @@ RecodeHaplos<-function(dat,numSNPs,allelic,maxMissingGenos=1,logriskmodel="addit
           SNPdat[!SNPdat[,i+1]==0,i+1]<-1          
       }      
   }
+
   # Pre-process input to deal with missing data
   preProcDat<-handleMissings(SNPdat,nonSNPdat,numSNPs,maxMissingGenos)
   # Note: we could get rid of these 2 as.matrix(..) typecasts if we fix up handleMissings sometime in the future - MP.nov.2003
@@ -237,10 +238,12 @@ handleMissings<-function(SNPdat,nonSNPdat,numSNPs,maxMissingGenos)
 
   # Remove people with too many missing genotypes
   ind<-numMissingGenos<=maxMissingGenos
+
   if(sum(!ind)>0) {
     warning(paste(sum(!ind),
             "subjects with missing data in more than",maxMissingGenos,
             "genotype(s) removed\n"))
+
     nonSNPdat<-data.frame(nonSNPdat[ind,])
     SNPdat<-data.frame(SNPdat[ind,])
     numMissingGenos<-numMissingGenos[ind]
@@ -263,7 +266,17 @@ handleMissings<-function(SNPdat,nonSNPdat,numSNPs,maxMissingGenos)
     nonSNPdat<-data.frame(nonSNPdat[!missingGenos,])
     ID<-ID[!missingGenos]
 
-    # Now augment the SNP and nonSNP data by enumerating sets of complete 
+# data.frame casting turns numeric characters to factors.
+# That created a problem when a rare SNP has only one factor level
+# while completePhenos has 2 factor levels.  -SB
+for(ii in 1:ncol(SNPdat)) {
+SNPdat[[ii]]<-as.numeric(as.character(SNPdat[[ii]]))
+}
+for(ii in 1:ncol(temSNPdat)) {
+temSNPdat[[ii]]<-as.numeric(as.character(temSNPdat[[ii]]))
+}
+
+    # Now augment the SNP and nonSNP data by enumerating sets of complete
     # SNP genos (call these "complete phenos") consistent with the
     # observed phenotypes.
     for(i in 1:sum(missingGenos)) {
