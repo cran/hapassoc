@@ -1,5 +1,5 @@
 # Filename: PreHap.R
-# Version : $Id: PreHap.R,v 1.10 2005/04/06 04:26:22 sblay Exp $
+# Version : $Id: PreHap.R,v 1.12 2005/06/30 21:41:22 sblay Exp $
 
 # HapAssoc- Inference of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -23,9 +23,6 @@
 pre.hapassoc <- function(dat,numSNPs,maxMissingGenos=1, pooling.tol=0.05, 
                         zero.tol=1/(2*nrow(dat)*10), allelic=TRUE){
 
-#  if(method=="PHASE")
-#    haplos.list<-RecodeHaplosPHASE(dat,numSNPs,maxMissingGenos)
-#  else
   haplos.list<-RecodeHaplos(dat,numSNPs,allelic,maxMissingGenos)
   haplotest<-FALSE; ID.check<-rep(FALSE,length(haplos.list$ID))
 
@@ -40,14 +37,8 @@ pre.hapassoc <- function(dat,numSNPs,maxMissingGenos=1, pooling.tol=0.05,
 
   #Run the usual EM algorithm using just the haplo information to
   #get estimates of haplotype frequencies and initial weights
-#  if(method=="PHASE") {
-#      emres<-EMnullPHASE() #in phase case, emres just contains gamma
-#      newwt<-haplos.list$wt  #In the phase case, we already have initial estimates given
-#  }
-#  else  {
-      emres<-EMnull(haplos.list)
-      newwt<-emres$wts
-#  }
+  emres<-EMnull(haplos.list)
+  newwt<-emres$wts
 
   initFreq<-emres$gamma[!emres$gamma<zero.tol] #haplos with non-zero frequency
   haplos.names<-names(initFreq)
@@ -138,7 +129,6 @@ EMnull<-function(haplos.list, gamma=FALSE, maxit=100, tol=1/(2*sum(haplos.list$w
  haploMat <- haplos.list$haploMat
 
  ID <- haplos.list$ID
- # N<-ID[length(ID)]
  N<-sum(haplos.list$wt)
  wts<-haplos.list$wt
  
@@ -174,10 +164,11 @@ EMnull<-function(haplos.list, gamma=FALSE, maxit=100, tol=1/(2*sum(haplos.list$w
 	# Use the ID to determine the number of pseudo-individuals in the
 	# denominator probability
 
-	for (i in 1:nrow(haploMat)){               
-		pseudo.index<-ID==ID[i]
-                wts[i] <- num.prob[i]/sum(num.prob[pseudo.index])
-        }
+        wts<-vector("double", length(wts))
+        wts<-.C("getWts", as.integer(nrow(haploMat)), as.integer(ID),
+                 wts = as.double(wts), as.double(as.vector(num.prob)),
+                 PACKAGE="hapassoc")
+        wts <- wts$wts
 
 	# M step: Find new estimates using weighted haplotype counts
         allWts<-c(wts,wts)

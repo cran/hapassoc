@@ -1,5 +1,5 @@
 # Filename: hapassoc.R
-# Version : $Id: hapassoc.R,v 1.18 2005/04/06 20:22:59 sblay Exp $
+# Version : $Id: hapassoc.R,v 1.21 2005/06/30 21:40:13 sblay Exp $
 
 # HapAssoc- Inference of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -55,7 +55,7 @@ hapassoc<-function(form, haplos.list, baseline="missing", family=binomial(),
  # Initial beta values calculated from augmented data set
  # The ... in the following call to glm allows user to pass other args to glm
 
- regr<-glm(form, family=family, data=hdat,...) 
+ regr<-glm(form, family=family, data=hdat, weights=wts, ...) 
  response<-regr$y #Change added Nov.2/04 to extract response from fitted model
  beta<-regr$coef
  fits<-regr$fitted.values
@@ -85,10 +85,11 @@ hapassoc<-function(form, haplos.list, baseline="missing", family=binomial(),
 	# Use the ID to determine the number of pseudo-individuals in the 
 	# denominator probability
 
-	for (i in 1:nrow(hdat)){               
-		pseudo.index<-(ID==ID[i])
-                wts[i] <- num.prob[i]/sum(num.prob[pseudo.index])
-        }
+        wts<-vector("double", length(wts))
+        wts<-.C("getWts", as.integer(nrow(hdat)), as.integer(ID),
+                 wts = as.double(wts), as.double(as.vector(num.prob)), 
+                 PACKAGE="hapassoc")
+        wts <- wts$wts
 
 	# M step: Find new estimates using GLM and weighted haplotype counts
 

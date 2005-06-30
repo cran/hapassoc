@@ -1,3 +1,8 @@
+2005-06-30 Version 0.7
+* hapassoc(): use initial weights in the glm to get initial parameter estimates.
+* hapassoc(), pre.hapassoc(): replaced weights calcuation with a C function.
+  Speed up computing time for large data sets.
+
 2005-05-31 Version 0.6-2
 * handleMissings(): fixed a bug for SNPs with a rare allele that is in no
   instance in a homozygous state.
