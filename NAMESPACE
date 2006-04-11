@@ -1,0 +1,1 @@
+export(hapassoc, pre.hapassoc, summary.hapassoc, anova.hapassoc, logLik.hapassoc)

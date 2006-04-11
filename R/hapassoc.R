@@ -1,7 +1,7 @@
 # Filename: hapassoc.R
-# Version : $Id: hapassoc.R,v 1.21 2005/06/30 21:40:13 sblay Exp $
+# Version : $Id: hapassoc.R,v 1.33 2006/04/05 18:10:52 mcneney Exp $
 
-# HapAssoc- Inference of trait-haplotype associations in the presence of uncertain phase
+# hapassoc- Inference of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
 
 # This program is free software; you can redistribute it and/or modify
@@ -21,9 +21,29 @@
 ########################################################################
 
 hapassoc<-function(form, haplos.list, baseline="missing", family=binomial(), 
-             freq=FALSE, maxit=50, tol=0.001, ...){
+             freq=NULL, maxit=50, tol=0.001, start=NULL, verbose=FALSE){
 
  environment(form)<-environment()#set envir of formula to envir w/i hapassoc function
+
+if (is.character(family))
+    family <- get(family, mode = "function", envir = parent.frame())
+if (is.function(family))
+    family <- family()
+if(family$family=="binomial") family<-binomialNoWarn() 
+   # so we don't issue warnings in M step
+
+ haplos.names<-names(haplos.list$initFreq)
+ # Initial freq values, if no freq specified use initFreq
+ if (!is.null(freq)) {
+   names(freq)<-haplos.names
+ } else {
+   freq<-haplos.list$initFreq
+ }
+
+ if(all.vars(form)[2]=="." && (baseline=="missing")) { 
+   #Then formula is of form "y ~ ." and no baseline specified
+   baseline<-haplos.names[which.max(freq)] 
+ }
  column.subset <- colnames(haplos.list$haploDM)!=baseline
  hdat <- cbind(haplos.list$nonHaploDM, haplos.list$haploDM[,column.subset])
  # We used to use model.response to extract the response variable, but
@@ -42,20 +62,10 @@ hapassoc<-function(form, haplos.list, baseline="missing", family=binomial(),
  haplos<-haplos.list$haploDM
  haploMat<-haplos.list$haploMat
  allHaps<-c(haploMat[,1],haploMat[,2]) #Needed later in hapassoc loop for wt calcs
- haplos.names<-names(haplos.list$initFreq)
-
- # Initial freq values, if no freq specified use initFreq
-
- if (freq!=FALSE) {
-   names(freq)<-haplos.names
- } else {
-   freq<-haplos.list$initFreq
- }
 
  # Initial beta values calculated from augmented data set
- # The ... in the following call to glm allows user to pass other args to glm
+ regr<-glm(form, family=family, data=hdat, weights=wts, start=start) 
 
- regr<-glm(form, family=family, data=hdat, weights=wts, ...) 
  response<-regr$y #Change added Nov.2/04 to extract response from fitted model
  beta<-regr$coef
  fits<-regr$fitted.values
@@ -96,6 +106,7 @@ hapassoc<-function(form, haplos.list, baseline="missing", family=binomial(),
 	# Find the new betas using old betas as starting value
         regr <- glm(form, family=family, data=hdat, weights=wts,
                     control=glm.control(epsilon=1e-08),start=beta)
+
         betaNew<-regr$coef
    	fits<-regr$fitted.values
 	betadiff<-max( max(abs(beta-betaNew), na.rm=TRUE),
@@ -104,6 +115,9 @@ hapassoc<-function(form, haplos.list, baseline="missing", family=binomial(),
 
 	# Find the new freqs, weighted sum of haplotypes
         freq <- tapply(c(wts,wts),allHaps,sum)/(2*N)
+
+	if(verbose) 
+	  cat("iteration",it,": value of convergence criterion =",betadiff,"\n")
 
         it<-it+1
  }
@@ -115,20 +129,29 @@ hapassoc<-function(form, haplos.list, baseline="missing", family=binomial(),
     return(ans)
  }
 
-
- 
  #freq is currently an array which causes problems in the calculations below
  freq <- as.matrix(freq) 
 
- EMresults <- list(beta=beta, gamma=freq, fits=fits, wts=wts, 
-                   glm.final.fit=regr,dispersion=phi, response=response)
+ # Added more elements to EMresults list for later call to
+ # log.likelihood and renamed dispersion (KB 18/02/2006)
+ EMresults <- list(beta=beta, gamma=freq, fits=fits, wts=wts, ID=ID,
+                   glm.final.fit=regr,dispersionML=phi, family=family,
+                   response=response)
+
  names(haplos.list)[names(haplos.list)=="freq"] <- "gamma"
  names(EMresults)[names(EMresults)== "freq"] <- "gamma"
  var.est <- EMvar(haplos.list, EMresults, family)
 
+ # Compute the log-likelihood so that results can be returned
+ # from function (KB 18/02/2006)
+ loglik <- loglikelihood(haplos.list,EMresults)
+
+
+ # Added the model equation and log-likelihood as elements
+ # returned from function (KB 18/02/2006)
  ans<-list(it=it, beta=beta, freq=freq, fits=fits, wts=wts, ID=ID,
            var=var.est, dispersionML=phi, family=family, response=response,
-           converged=TRUE)
+           converged=TRUE, model=form,loglik=loglik)
 
  class(ans)<-"hapassoc"
  return(ans)
@@ -344,7 +367,10 @@ EMvar<-function(haplos.list, results, family)  {
 
    ## Score matrix
 
+   if(!is.null(Sphi)) # a fix to bug submitted by Kelly on Feb 8, 2006 -s.b.
    S<-cbind(Sbeta,Sphi,Sgamma)
+   else
+   S<-cbind(Sbeta,Sgamma)
 
    ## Calculate Imis from the other matrices
 

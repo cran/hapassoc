@@ -1,3 +1,9 @@
-.First.lib<-function (lib, pkg)  {
-   library.dynam("hapassoc", pkg, lib)
+.onLoad <- function(libname, pkgname) {
+    library.dynam("hapassoc", pkgname, libname)
+}
+
+.noGenerics <- TRUE
+
+.onUnload <- function(libpath) {
+    library.dynam.unload("hapassoc", libpath)
 }

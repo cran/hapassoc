@@ -9,22 +9,25 @@ the single-locus phenotypes.  The EM algorithm is used to find
 MLE's for trait associations with covariates in generalized linear models.
 }
 \usage{hapassoc(form,haplos.list,baseline = "missing" ,family = binomial(),
-freq = FALSE, maxit = 50, tol = 0.001, \ldots)}
+freq = NULL, maxit = 50, tol = 0.001, start = NULL, verbose=FALSE)}
 \arguments{
 \item{form}{model equation in usual R format}
 \item{haplos.list}{list of haplotype data from \code{\link{pre.hapassoc}}}
 \item{baseline}{optional, haplotype to be used for baseline coding. Default
-is the most frequent haplotype.}
+is the most frequent haplotype according to the initial haplotype frequency
+estimates returned by \code{\link{pre.hapassoc}}.}
 \item{family}{binomial, poisson, gaussian or freq are supported, 
 default=binomial}
 \item{freq}{initial estimates of haplotype frequencies, default values are 
 calculated in \code{\link{pre.hapassoc}} using standard haplotype-counting 
 (i.e. EM algorithm without adjustment for non-haplotype covariates)}
 \item{maxit}{maximum number of iterations of the EM algorithm; default=50}
-\item{tol}{convergence tolerance in terms of the maximum difference in 
-parameter estimates between interations; default=0.001}
-\item{\ldots}{additional arguments to be passed to the glm function such 
-as starting values for parameter estimates in the risk model}
+\item{tol}{convergence tolerance in terms of either the maximum difference in 
+parameter estimates between interations or the maximum relative
+difference in parameter estimates between iterations, which ever is larger.}
+\item{start}{starting values for parameter estimates in the risk model}
+\item{verbose}{should the iteration number and value of the covergence criterion be printed
+at each iteration of the EM algorithm? Default=FALSE}
 }
 \value{
 \item{it}{number of iterations of the EM algorithm}
@@ -43,6 +46,9 @@ gaussian, etc.)}
 \item{response}{trait value}
 \item{converged}{TRUE/FALSE indicator of convergence. If the algorithm 
 fails to converge, only the \code{converged} indicator is returned.}
+\item{model}{model equation}
+\item{loglik}{The log-likelihood evaluated at the maximum likelihood estimates 
+of all parameters}
 }
 \examples{
 data(hypoDat)
@@ -77,15 +83,12 @@ example2.regr <- hapassoc(affected ~ attr + I(h000==2) + I(h001==2) +
 \references{Burkett K, McNeney B, Graham J (2004).
 A note on inference of trait associations with SNP
 haplotypes and other attributes in generalized linear models.
-Human Heredity, \bold{57}:200-206}
-\note{When fitting logistic regression models (i.e. \code{family=binomial()}),
-you will see warning messages:
+Human Heredity, \bold{57}:200-206
 
-\code{non-integer #successes in a binomial glm! in: eval(expr, envir, enclos)}
-
-even when the response variable includes only counts.
-These warnings result from fitting a weighted logistic regression
-at each iteration of the EM algorithm and can be safely ignored.}
+Burkett K, Graham J and McNeney B. hapassoc: Software for likelihood
+inference of trait associations with SNP haplotypes and other
+attributes. Under revision for Journal of Statistical Software.
+}
 \seealso{
 \code{\link{pre.hapassoc}},\code{\link{summary.hapassoc}},\code{\link{glm}},\code{\link{family}}.
 }

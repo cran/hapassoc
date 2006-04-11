@@ -12,8 +12,7 @@ each allele of the single-locus genotypes (\dQuote{allelic format}),
 or (ii) as columns of two-character genotypes (\dQuote{genotypic format}).
 The SNP data should comprise the
 last 2*numSNPs columns (allelic format) or the last numSNPs columns (genotypic
-format) of the data frame. Note: at this time 
-it is up to the user to ensure \emph{all} loci are diallelic. 
+format) of the data frame. 
 
 If the haplotypes for a subject cannot be
 inferred from his or her genotype data, ``pseudo-individuals''
@@ -23,7 +22,7 @@ Missing single-locus genotypes, up to a maximum of maxMissingGenos (see
 below), are allowed, but subjects with missing data in more than
 maxMissingGenos, or with missing non-SNP data, are removed.
 Initial estimates of haplotype frequencies are then obtained using the 
-EM algorithm applied to the multilocus genotype data. 
+EM algorithm applied to the genotype data. 
 Haplotypes with frequencies below a user-specified tolerance (zero.tol)
 are assumed not to exist and are removed from further consideration.
 (Pseudo-individuals having haplotypes of negligible frequency are deleted and 
@@ -36,7 +35,7 @@ still calculated separately.
 }
 
 \usage{pre.hapassoc(dat,numSNPs,maxMissingGenos=1,pooling.tol = 0.05, 
-       zero.tol = 1/(2 * nrow(dat) * 10), allelic=TRUE)}
+       zero.tol = 1/(2 * nrow(dat) * 10), allelic=TRUE, verbose=TRUE)}
 \arguments{
 \item{dat}{the non-SNP and SNP data as a data frame. The SNP data should comprise the last 2*numSNPs columns (allelic format) or last numSNPs columns (genotypic format).
 Missing allelic data should be coded as \code{NA} or \code{""} and missing genotypic data should be coded as, e.g., \code{"A"} if one allele is missing and \code{""} if both alleles are missing.  }
@@ -47,6 +46,9 @@ Missing allelic data should be coded as \code{NA} or \code{""} and missing genot
 are assumed not to exist -- by default set to 
 \eqn{\frac{1}{2*N*10}}{1/(2*N*10)} where N is the number of subjects}
 \item{allelic}{TRUE if single-locus SNP genotypes are in allelic format and FALSE if in genotypic format; default is TRUE.}
+\item{verbose}{indicates whether or not a list of the genotype
+variables used to form haplotypes and a list of other non-genetic
+variables should be printed; default is TRUE.}
 }
 \value{
 \item{haplotest}{logical, TRUE if some haplotypes were pooled in the risk model}
@@ -59,14 +61,7 @@ are assumed not to exist -- by default set to
 \item{wt}{vector giving initial weights for each pseudo-individual for 
 the EM algorithm}
 \item{ID}{index for each individual in the original data frame. Note that all pseudo-individuals have the same ID value}
-\item{unknown}{vector indicating whether the haplotype information was missing for each row in the augmented data}
 }
-\note{When one or more subjects have missing genotype data, expect warnings
-of the form
-
-\code{row.names duplicated --> row.names NOT used in ...}
-
-These warnings can be safely ignored.}
 \examples{
 #First example data set has single-locus genotypes in "allelic format"
 data(hypoDat)
@@ -110,7 +105,12 @@ names(example2.pre.hapassoc$haploDM)
 \references{Burkett K, McNeney B, Graham J (2004). 
 A note on inference of trait associations with SNP
 haplotypes and other attributes in generalized linear models.
-Human Heredity, \bold{57}:200-206}
+Human Heredity, \bold{57}:200-206
+
+Burkett K, Graham J and McNeney B. hapassoc: Software for likelihood
+inference of trait associations with SNP haplotypes and other
+attributes. Under revision for Journal of Statistical Software.
+}
 \seealso{
 \code{\link{hapassoc}},\code{\link{summary.hapassoc}}.
 }

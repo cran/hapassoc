@@ -17,11 +17,20 @@
 
 ########################################################################
 
-RecodeHaplos<-function(dat,numSNPs,allelic,maxMissingGenos=1,logriskmodel="additive") {
+RecodeHaplos<-function(dat,numSNPs,allelic,maxMissingGenos=1, verbose=TRUE) {
 
-  # Split dat into nonSNP and SNP data
+  # Split dat into nonSNP and SNP data - also report marker names if verbose=TRUE
+  # so the user can see if pre.hapassoc is separating genetic and non-genetic 
+  # as expected.
   ncols<-ncol(dat)
-  if(!allelic) {    # turn genetic d.f. to allelic d.f.
+  if(!allelic) {    
+      if(verbose) {
+        cat(paste("Haplotypes will be based on the following SNPs (genotypic format): \n",
+                   paste(names(dat)[(ncols-numSNPs+1):ncols],collapse=", "),"\n"))
+        cat(paste("Remaining variables are: \n",paste(names(dat)[1:(ncols-numSNPs)],collapse=", "),"\n"))
+      }
+      # turn genetic d.f. to allelic d.f.
+      nhdmnames <- names(dat)[1:(ncols-numSNPs)] # names are lost if ncols-numSNPs is a single column
       dat1<-dat[,1:(ncols-numSNPs)]
       for(i in (ncols-numSNPs+1):ncols) {
           dat1<-data.frame(dat1, substr(as.character(dat[,i]),1,1),
@@ -31,8 +40,17 @@ RecodeHaplos<-function(dat,numSNPs,allelic,maxMissingGenos=1,logriskmodel="addit
              paste(names(dat)[i],".",1:2, sep="")
       }
       dat <- dat1
-      ncols<-ncol(dat)
-  }   
+      ncols <- ncol(dat)
+      names(dat)[1:(ncols-2*numSNPs)] <- nhdmnames
+  }  else {
+      if(verbose) {
+       mnms<-names(dat)[(ncols-2*numSNPs+1):ncols]
+       cat("Haplotypes will be based on the following SNPs (allelic format): \n")
+       for(ii in 1:(length(mnms)/2)) 
+          cat(paste(" SNP ",ii,": ",mnms[2*ii-1],"/",mnms[2*ii],"\n",sep=""))
+       cat(paste("Remaining variables are: \n",paste(names(dat)[1:(ncols-2*numSNPs)],collapse=", "),"\n"))
+      }
+  }
   # Substitue empty strings "" with NA:
   for(i in (ncols-2*numSNPs+1):ncols) {
       dat[nchar(as.vector(dat[,i]))==0,i]<-NA
@@ -40,14 +58,15 @@ RecodeHaplos<-function(dat,numSNPs,allelic,maxMissingGenos=1,logriskmodel="addit
   nonsnpcols<-ncols-2*numSNPs
   snpcols<-ncols-nonsnpcols
   nonSNPdat<-dat[,1:(ncols-2*numSNPs)]
-  nhdmnames=names(dat)[1:(ncols-2*numSNPs)] #save the col names for the output - they will disappear when we typecast to matrix below
+  nhdmnames<-names(dat)[1:(ncols-2*numSNPs)] #save the col names for the output - they will disappear when we typecast to matrix below
 
   nonSNPdat <- as.matrix(nonSNPdat)#as.data.frame(nonSNPdat)
   SNPdat<-as.matrix(dat[,(ncols-2*numSNPs+1):ncols])
 
   for (i in seq(length=ncol(SNPdat)/2, from=1, by=2))
        if (length(na.omit(unique(c(SNPdat[,i],SNPdat[,i+1])))) > 2)
-           stop("Number of alleles at each locus cannot surpass 2.\n")
+           stop(paste("Alleles", paste(na.omit(unique(c(SNPdat[,i],SNPdat[,i+1]))),collapse=", "),
+                "at marker",i,"-- no more than 2 alleles allowed. \n"))
 
   # if SNP data are given as nucleotide letters, create SNPkey,
   # a vector of the more frequent nucleotide in each SNP
@@ -124,7 +143,7 @@ RecodeHaplos<-function(dat,numSNPs,allelic,maxMissingGenos=1,logriskmodel="addit
     numHaploComb<-nrow(myhaplos)
 
     for(j in 1:numHaploComb) { #loop over haplo combos consistent w/ obs data
-      haploDM[hdmidx,]<-codeHaploDM(myhaplos[j,],haploLabs,model=logriskmodel)
+      haploDM[hdmidx,]<-codeHaploDM(myhaplos[j,],haploLabs)
       hdmidx<-hdmidx+1
     }
     for(j in 1:numHaploComb){
@@ -158,8 +177,7 @@ RecodeHaplos<-function(dat,numSNPs,allelic,maxMissingGenos=1,logriskmodel="addit
 
   #Only need to return the columns of haploDM that have non-zero column sums:
   myColSums<-colSums(haploDM)
-  haploDM<-haploDM[,myColSums>0]
-
+  haploDM<-haploDM[,myColSums>0, drop=FALSE]
   haploDM<-data.frame(haploDM)
 
   #Here we re-format our  haploMat to be compatible with the old output format and store it
@@ -244,7 +262,7 @@ handleMissings<-function(SNPdat,nonSNPdat,numSNPs,maxMissingGenos)
             "subjects with missing data in more than",maxMissingGenos,
             "genotype(s) removed\n"))
 
-    nonSNPdat<-data.frame(nonSNPdat[ind,])
+    nonSNPdat<-nonSNPdat[ind,,drop=FALSE]
     SNPdat<-data.frame(SNPdat[ind,])
     numMissingGenos<-numMissingGenos[ind]
   }
@@ -253,17 +271,14 @@ handleMissings<-function(SNPdat,nonSNPdat,numSNPs,maxMissingGenos)
   missingGenos<-(numMissingGenos>0)
   if(any(missingGenos)) {
     # First save copies of those with missing data
-    if(is.vector(SNPdat[missingGenos,])) # a single row
-       temSNPdat<-data.frame(matrix(SNPdat[missingGenos,], ncol=2*numSNPs))
-    else
-       temSNPdat<-data.frame(SNPdat[missingGenos,])
+    temSNPdat<-SNPdat[missingGenos,,drop=FALSE]
 
-    temnonSNPdat<-data.frame(nonSNPdat[missingGenos,])
+    temnonSNPdat<-nonSNPdat[missingGenos,,drop=FALSE]
     temID<-ID[missingGenos]
 
     # Reduce SNPdat and nonSNPdat to people who have no missing data
-    SNPdat<-data.frame(SNPdat[!missingGenos,]) 
-    nonSNPdat<-data.frame(nonSNPdat[!missingGenos,])
+    SNPdat<-SNPdat[!missingGenos,,drop=FALSE]
+    nonSNPdat<-nonSNPdat[!missingGenos,,drop=FALSE]
     ID<-ID[!missingGenos]
 
 # data.frame casting turns numeric characters to factors.
@@ -285,7 +300,9 @@ temSNPdat[[ii]]<-as.numeric(as.character(temSNPdat[[ii]]))
       numPhenos<-nrow(completePhenos)
       for(j in 1:numPhenos) { #loop over complete phenos consistent w/ obs data
         SNPdat<-rbind(SNPdat,completePhenos[j,])
-        nonSNPdat<-data.frame(rbind(as.matrix(nonSNPdat),as.matrix(temnonSNPdat[i,])))
+        nonSNPdat<-data.frame(rbind(as.matrix(nonSNPdat),
+                   as.matrix(temnonSNPdat[i,])),
+                   row.names=as.character(1:nrow(SNPdat)))
         ID <- c(ID,temID[i])
       }
     } # end loop over subjects with missing data
@@ -300,8 +317,6 @@ getPhenos<-function(snps,numSNPs,missingVec) {
   # Then order the alleles       --> 0/0, 0/1, 0/1, 1/1
   # Then remove duplicates       --> 0/0, 0/1, 1/1
 
-  knownAlleles<-snps[!missingVec]
-
   # Enumerate all possible values for missings
   k<-sum(missingVec)
   # Can use makeHaploLab to enumerate all possible alleles for missing vals
@@ -314,6 +329,13 @@ getPhenos<-function(snps,numSNPs,missingVec) {
 
   myPhenos<-matrix(NA,nrow=numPhenos,ncol=length(snps))
 
+  if(any(missingVec==FALSE)) {
+      knownAlleles <- snps[!missingVec]
+      myPhenos[, !missingVec] <- matrix(rep(knownAlleles, numPhenos),
+        ncol = length(knownAlleles), byrow = TRUE)
+  }
+
+  knownAlleles<-snps[!missingVec]
   myPhenos[,!missingVec]<-matrix(rep(knownAlleles,numPhenos),
                                  ncol=length(knownAlleles),
                                  byrow=TRUE)
@@ -429,13 +451,8 @@ getHaplos<-function(SNPvec,heteroVec){
 ##########################################################################
 
 
-codeHaploDM<-function(haplos,haploLabs,model="additive"){
+codeHaploDM<-function(haplos,haploLabs){
 
-  #Nice try, but this is broken for >2 snps, see below for general implementation --Matt
-  #ans<-((haplos[1]==haploLabs[,1]) & (haplos[2]==haploLabs[,2]))
-  #ans<-ans+((haplos[3]==haploLabs[,1]) & (haplos[4]==haploLabs[,2]))
-
-  #Not as "tricky" as above, but much cleaner to understand:
   n=length(haplos)
   nsnp=ncol(haploLabs)
 

@@ -1,3 +1,40 @@
+2006-04-04 Version 1.0
+* hapassoc(): the "baseline" argument is documented to have default equal to 
+  the most common haplotype, but the code to implement this default was 
+  lost and needed to be replaced.
+* hapassoc(): added a "verbose" flag. Default is verbose=FALSE. If TRUE users 
+  see the iteration number and value of the convergence criterion at each
+  iteration of the EM algorithm.
+* pre.hapassoc(): added a "verbose" flag. Default is verbose=TRUE. If TRUE 
+  users see a list of the SNP genotypes used to form haplotypes and a list 
+  of the other "non-haplotype" variables 
+* Package vignette "hapassoc" added. After loading the package, type 
+  vignette("hapassoc") to view.
+
+
+2006-03-22 
+* Overall addition of the log-likelihood functions
+* hapassoc(): function now returns log-likelihood and model
+* logLik.hapassoc(): New function to extract the log-likelihood 
+  from a hapassoc object
+* anova.hapassoc(): New function to perform likelihood ratio test on
+  two hapassoc objects.
+
+
+2006-02-02 Minor changes:
+* EMvar(): fixed a bug occurring when all haplotype phases are known.
+* RecodeHaplos(): fixed a bug where a single column of non-haplotype data 
+  in a non-allelic data set was losing its name.
+* hapassoc(): Change "..." argument of hapassoc to "start". Previously the 
+  only intended use of "..." was to allow the user to pass in "start" for 
+  starting values to the glm function, rather than to allow the user to pass 
+  in other optional arguments to glm. We have now made this more explicit by 
+  making this argument more specific.
+
+2005-07-13 Version 0.7-1
+* handleMissings(), pre.hapassoc(): instead of casting to a 
+  data.frame use indexing argument drop=FALSE.
+
 2005-06-30 Version 0.7
 * hapassoc(): use initial weights in the glm to get initial parameter estimates.
 * hapassoc(), pre.hapassoc(): replaced weights calcuation with a C function.

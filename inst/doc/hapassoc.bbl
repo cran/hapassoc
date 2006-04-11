@@ -1,0 +1,70 @@
+\begin{thebibliography}{10}
+\newcommand{\enquote}[1]{``#1''}
+\expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
+\expandafter\ifx\csname url\endcsname\relax
+  \def\url#1{\texttt{#1}}\fi
+\expandafter\ifx\csname urlprefix\endcsname\relax\def\urlprefix{URL }\fi
+\providecommand{\eprint}[2][]{\url{#2}}
+
+\bibitem[{Burkett(2002)}]{Burkett02}
+Burkett K (2002).
+\newblock \emph{Logistic regression with missing haplotypes}.
+\newblock Master's thesis, {S}tatistics and {A}ctuarial {S}cience: {S}imon
+  {F}raser {U}niversity.
+
+\bibitem[{Burkett \emph{et~al.}(2004)Burkett, McNeney, and Graham}]{Burkett04}
+Burkett K, McNeney B, Graham J (2004).
+\newblock \enquote{A note on inference of trait associations with {SNP}
+  Haplotypes and other attributes in generalized linear models.}
+\newblock \emph{Human Heredity}, \textbf{57}, 200--206.
+
+\bibitem[{Dempster \emph{et~al.}(1977)Dempster, Laird, and Rubin}]{Dempster77}
+Dempster AP, Laird NM, Rubin DB (1977).
+\newblock \enquote{Maximum likelihood from incomplete data via the {EM}
+  algorithm (with discussion).}
+\newblock \emph{J Roy Statist Soc B}, \textbf{39}, 1--38.
+
+\bibitem[{Horton and Laird(1999)}]{HortonLaird99}
+Horton NJ, Laird NM (1999).
+\newblock \enquote{Maximum likelihood analysis of generalized linear models
+  with missing covariates.}
+\newblock \emph{Statistical Methods in Medical Research}, \textbf{8}, 37--50.
+
+\bibitem[{Ibrahim(1990)}]{Ibrahim90}
+Ibrahim JG (1990).
+\newblock \enquote{Incomplete data in generalized linear models.}
+\newblock \emph{J Am Statist Assoc}, \textbf{85}, 765--769.
+
+\bibitem[{Lake \emph{et~al.}(2003)Lake, Lyon, Tantisira, Silverman, Weiss,
+  Laird, and Schaid}]{Lake03}
+Lake SL, Lyon H, Tantisira K, Silverman EK, Weiss ST, Laird NM, Schaid DJ
+  (2003).
+\newblock \enquote{Estimation and tests of haplotype-environment interaction
+  when linkage phase is ambiguous.}
+\newblock \emph{Human Heredity}, \textbf{55}, 56--65.
+
+\bibitem[{Lipsitz and Ibrahim(1996)}]{LipsitzIbrahim96}
+Lipsitz SR, Ibrahim JG (1996).
+\newblock \enquote{A conditional model for incomplete covariates in parametric
+  regression models.}
+\newblock \emph{Biometrika}, \textbf{83}, 916--922.
+
+\bibitem[{Louis(1982)}]{Louis82}
+Louis TA (1982).
+\newblock \enquote{Finding the observed infromation matrix when using the {EM}
+  algorithm.}
+\newblock \emph{J Roy Statist Soc B}, \textbf{44}, 226--233.
+
+\bibitem[{Mc{C}ullagh and Nelder(1983)}]{McCullaghNelder83}
+Mc{C}ullagh P, Nelder J (1983).
+\newblock \emph{Generalized linear models}.
+\newblock Chapman and Hall, London.
+
+\bibitem[{Schaid \emph{et~al.}(2002)Schaid, Rowland, Tines, Jacobson, and
+  Poland}]{Schaid02}
+Schaid DJ, Rowland CM, Tines DE, Jacobson RM, Poland GA (2002).
+\newblock \enquote{Score tests for association between traits and haplotypes
+  when linkage phase is ambiguous.}
+\newblock \emph{Am J Hum Genet}, \textbf{70}, 425--434.
+
+\end{thebibliography}

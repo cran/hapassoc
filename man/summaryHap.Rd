@@ -52,7 +52,12 @@ summary.hapassoc(example.regr) # or just summary(example.regr)
 \references{Burkett K, McNeney B, Graham J (2004).
 A note on inference of trait associations with SNP
 haplotypes and other attributes in generalized linear models.
-Human Heredity, \bold{57}:200-206}
+Human Heredity, \bold{57}:200-206
+
+Burkett K, Graham J and McNeney B. hapassoc: Software for likelihood
+inference of trait associations with SNP haplotypes and other
+attributes. Under revision for Journal of Statistical Software.
+}
 \seealso{
 \code{\link{pre.hapassoc}},\code{\link{hapassoc}}.
 }

@@ -1,5 +1,5 @@
 # Filename: PreHap.R
-# Version : $Id: PreHap.R,v 1.12 2005/06/30 21:41:22 sblay Exp $
+# Version : $Id: PreHap.R,v 1.14 2006/04/06 01:17:00 mcneney Exp $
 
 # HapAssoc- Inference of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -21,9 +21,9 @@
 ########################################################################
 
 pre.hapassoc <- function(dat,numSNPs,maxMissingGenos=1, pooling.tol=0.05, 
-                        zero.tol=1/(2*nrow(dat)*10), allelic=TRUE){
+                 zero.tol=1/(2*nrow(dat)*10), allelic=TRUE, verbose=TRUE){
 
-  haplos.list<-RecodeHaplos(dat,numSNPs,allelic,maxMissingGenos)
+  haplos.list<-RecodeHaplos(dat,numSNPs,allelic,maxMissingGenos,verbose)
   haplotest<-FALSE; ID.check<-rep(FALSE,length(haplos.list$ID))
 
   # Starting matrices, some rows/columns will be deleted if there
@@ -54,7 +54,7 @@ pre.hapassoc <- function(dat,numSNPs,maxMissingGenos=1, pooling.tol=0.05,
 
     newhaploDM<-newhaploDM[finalMatInd,]
     newhaploMat<-newhaploMat[finalMatInd,]
-    newnonHaploDM<-data.frame(newnonHaploDM[finalMatInd,])
+    newnonHaploDM<-newnonHaploDM[finalMatInd,,drop=FALSE]
     names(newnonHaploDM)<-nonHaploDMnames
     newwt<-newwt[finalMatInd]
     newID<-newID[finalMatInd]
