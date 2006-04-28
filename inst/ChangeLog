@@ -1,3 +1,9 @@
+2006-04-28 Version 1.0-1
+* added the following second citation:
+Burkett K, Graham J and McNeney B (2006). hapassoc: Software for
+Likelihood Inference of Trait Associations with SNP Haplotypes and Other
+Attributes. Journal of Statistical Software, 16(2), 1-19
+
 2006-04-04 Version 1.0
 * hapassoc(): the "baseline" argument is documented to have default equal to 
   the most common haplotype, but the code to implement this default was 

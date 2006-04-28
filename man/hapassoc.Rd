@@ -85,9 +85,9 @@ A note on inference of trait associations with SNP
 haplotypes and other attributes in generalized linear models.
 Human Heredity, \bold{57}:200-206
 
-Burkett K, Graham J and McNeney B. hapassoc: Software for likelihood
-inference of trait associations with SNP haplotypes and other
-attributes. Under revision for Journal of Statistical Software.
+Burkett K, Graham J and McNeney B (2006). hapassoc: Software for
+Likelihood Inference of Trait Associations with SNP Haplotypes and Other
+Attributes. Journal of Statistical Software, \bold{16(2)}:1-19
 }
 \seealso{
 \code{\link{pre.hapassoc}},\code{\link{summary.hapassoc}},\code{\link{glm}},\code{\link{family}}.
