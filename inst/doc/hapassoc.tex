@@ -833,7 +833,13 @@ The output of \code{hapassoc} may be summarized with:
 > summary(example1.regr)
 \end{Sinput}
 \begin{Soutput}
-$coefficients
+Call:
+hapassoc(form = affected == 0 ~ attr + h000 + h010 + h011 + h100 + 
+    pooled, haplos.list = example1.haplos, family = binomial())
+
+Number of subjects used in analysis: 100 
+
+Coefficients:
                Estimate Std. Error      zscore   Pr(>|z|)
 (Intercept)  1.24304712  0.7826121  1.58833114 0.11221148
 attr        -0.74117082  0.2919206 -2.53894658 0.01111868
@@ -843,7 +849,7 @@ h011         0.03426242  0.9155250  0.03742379 0.97014710
 h100         0.85628090  1.0199383  0.83954187 0.40116530
 pooled      -0.38745841  0.8775181 -0.44153893 0.65882289
 
-$frequencies
+Estimated haplotype frequencies:
          Estimate Std. Error
 f.h000 0.26732097 0.03930403
 f.h001 0.25180046 0.03865720
@@ -854,8 +860,9 @@ f.h101 0.02586632 0.01412337
 f.h110 0.01785410 0.01384235
 f.h111 0.02126733 0.01247509
 
-$dispersion
-[1] 1
+(Dispersion parameter for binomial family taken to be 1)
+
+Log-likelihood: -322.155788349086 
 \end{Soutput}
 \end{Schunk}
 A global hypothesis test for haplotype effects may be performed with:
@@ -996,7 +1003,13 @@ To illustrate linear regression, the continuous non-genetic covariate
 > summary(example2.regr)
 \end{Sinput}
 \begin{Soutput}
-$coefficients
+Call:
+hapassoc(form = attr ~ hAAA + hACA + hACC + hCAA + pooled, haplos.list = example2.haplos, 
+    family = gaussian())
+
+Number of subjects used in analysis: 100 
+
+Coefficients:
                 Estimate Std. Error      zscore  Pr(>|z|)
 (Intercept) -0.198910820  0.3145337 -0.63239909 0.5271261
 hAAA        -0.003337329  0.2422522 -0.01377626 0.9890085
@@ -1005,7 +1018,7 @@ hACC         0.423914584  0.4979658  0.85129263 0.3946068
 hCAA         0.300230129  0.2938526  1.02170329 0.3069214
 pooled       0.019130817  0.3311376  0.05777302 0.9539294
 
-$frequencies
+Estimated haplotype frequencies:
           Estimate Std. Error
 f.hAAA 0.248400660 0.03590094
 f.hAAC 0.257565353 0.03806208
@@ -1016,8 +1029,9 @@ f.hCAC 0.030216413 0.01611531
 f.hCCA 0.009153699 0.00911681
 f.hCCC 0.021350608 0.01213278
 
-$dispersion
-[1] 1.009584
+(Dispersion parameter for gaussian family taken to be 1.00958412775600)
+
+Log-likelihood: -410.627503879034 
 \end{Soutput}
 \end{Schunk}
 The \code{dispersion} reported by the summary function

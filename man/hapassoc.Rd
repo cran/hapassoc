@@ -47,8 +47,9 @@ gaussian, etc.)}
 \item{converged}{TRUE/FALSE indicator of convergence. If the algorithm 
 fails to converge, only the \code{converged} indicator is returned.}
 \item{model}{model equation}
-\item{loglik}{The log-likelihood evaluated at the maximum likelihood estimates 
+\item{loglik}{the log-likelihood evaluated at the maximum likelihood estimates 
 of all parameters}
+\item{call}{the function call}
 }
 \examples{
 data(hypoDat)

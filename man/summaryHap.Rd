@@ -11,6 +11,8 @@ style to the lm and glm summaries.
 \item{\ldots}{additional arguments to the summary function (currently unused)}
 }
 \value{
+\item{call}{The function call to hapassoc}
+\item{subjects}{The number of subjects used in the analysis}
 \item{coefficients}{Table of estimated coefficients, standard errors and Wald tests for each variable}
 \item{frequencies}{Table of estimated haplotype frequencies and standard errors}
 \item{dispersion}{Estimate of dispersion parameter (Moment estimator for gamma model)}

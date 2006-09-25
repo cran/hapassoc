@@ -1,5 +1,5 @@
 # Filename: hapassoc.R
-# Version : $Id: hapassoc.R,v 1.33 2006/04/05 18:10:52 mcneney Exp $
+# Version : $Id: hapassoc.R,v 1.35 2006/07/16 23:34:18 sblay Exp $
 
 # hapassoc- Inference of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -24,6 +24,7 @@ hapassoc<-function(form, haplos.list, baseline="missing", family=binomial(),
              freq=NULL, maxit=50, tol=0.001, start=NULL, verbose=FALSE){
 
  environment(form)<-environment()#set envir of formula to envir w/i hapassoc function
+ call <-  match.call()
 
 if (is.character(family))
     family <- get(family, mode = "function", envir = parent.frame())
@@ -40,7 +41,7 @@ if(family$family=="binomial") family<-binomialNoWarn()
    freq<-haplos.list$initFreq
  }
 
- if(all.vars(form)[2]=="." && (baseline=="missing")) { 
+ if(!is.na(all.vars(form)[2]) && all.vars(form)[2]=="." && (baseline=="missing")) { 
    #Then formula is of form "y ~ ." and no baseline specified
    baseline<-haplos.names[which.max(freq)] 
  }
@@ -151,7 +152,7 @@ if(family$family=="binomial") family<-binomialNoWarn()
  # returned from function (KB 18/02/2006)
  ans<-list(it=it, beta=beta, freq=freq, fits=fits, wts=wts, ID=ID,
            var=var.est, dispersionML=phi, family=family, response=response,
-           converged=TRUE, model=form,loglik=loglik)
+           converged=TRUE, model=form,loglik=loglik, call=call)
 
  class(ans)<-"hapassoc"
  return(ans)

@@ -1,3 +1,11 @@
+2006-07-20 Version 1.1
+* fixed bug to enable formula = dependent ~ 1 in hapassoc() 
+  and summary.hapassoc()
+* hapassoc() now also returns the function call 
+* summary.hapassoc() now also returns the hapassoc function call, 
+  the number of subjects used in the analysis, the name of the 
+  family and the log-likelihood. The returned object is printed nicely.
+
 2006-04-28 Version 1.0-1
 * added the following second citation:
 Burkett K, Graham J and McNeney B (2006). hapassoc: Software for

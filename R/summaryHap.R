@@ -1,5 +1,5 @@
 # Filename: summaryHap.R
-# Version : $Id: summaryHap.R,v 1.8 2005/04/06 20:24:32 sblay Exp $
+# Version : $Id: summaryHap.R,v 1.12 2006/07/20 19:41:36 mcneney Exp $
 
 # HapAssoc- Estimation of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -38,7 +38,12 @@ numbeta<-length(object$beta)
 if(family=="Gamma"|family=="gaussian") #remove row and col for dispersion
    object$var<-object$var[-(numbeta+1),-(numbeta+1)]
 numfreqs<-length(object$gamma)
-coef.table<-cbind(object$beta,sqrt(diag(object$var[1:numbeta,1:numbeta])))
+
+if(numbeta>1)
+  coef.table<-cbind(object$beta,sqrt(diag(object$var[1:numbeta,1:numbeta])))
+else
+  coef.table<-cbind(object$beta,sqrt(object$var[1:numbeta,1:numbeta]))
+
 #Now calculate the se for the last frequency estimator
 varfreqs<-object$var[(numbeta+1):(numbeta+numfreqs-1),(numbeta+1):(numbeta+numfreqs-1)]
 cvec<-rep(-1,numfreqs-1)
@@ -56,12 +61,33 @@ dimnames(freq.table)<-list(
       paste("f.",dimnames(object$gamma)[[1]],sep=""),
       c("Estimate","Std. Error"))
 
-return(list(coefficients=coef.table,frequencies=freq.table,
-            dispersion=dispersion))
+sumList <- list(call=object$call,subjects=length(unique(object$ID)),
+            coefficients=coef.table,frequencies=freq.table,
+            dispersion=dispersion,loglik=object$loglik,
+            family=object$family$family)
+class(sumList) <- "summary.hapassoc"
+return(sumList)
 }
 ## Other functions called in summary.hapassoc
 
 ########################################################################
+
+print.summary.hapassoc<-function(x, ...){
+  cat("Call:\n")
+  print(x[[1]])
+
+  cat("\nNumber of subjects used in analysis:",x[[2]],"\n")
+
+  cat("\nCoefficients:\n")
+  print(x[[3]])
+
+  cat("\nEstimated haplotype frequencies:\n")
+  print(x[[4]])
+
+  cat(paste("\n(Dispersion parameter for ",x$family," family taken to be ",x$dispersion,")\n",sep=""))
+
+  cat(paste("\nLog-likelihood:",x$loglik,"\n\n"))
+}
 
 momentPhiGamma<-function(object) {
   ans<-0
