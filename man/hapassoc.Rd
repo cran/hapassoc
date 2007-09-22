@@ -93,4 +93,7 @@ Attributes. Journal of Statistical Software, \bold{16(2)}:1-19
 \seealso{
 \code{\link{pre.hapassoc}},\code{\link{summary.hapassoc}},\code{\link{glm}},\code{\link{family}}.
 }
+\details{
+See the hapassoc vignette, of the same name as the package, for details.
+}
 \keyword{methods}

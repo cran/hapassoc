@@ -114,4 +114,7 @@ Other Attributes. Journal of Statistical Software, \bold{16(2)}:1-19
 \seealso{
 \code{\link{hapassoc}},\code{\link{summary.hapassoc}}.
 }
+\details{
+See the hapassoc vignette, of the same name as the package, for details.
+}
 \keyword{methods}

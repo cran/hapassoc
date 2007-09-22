@@ -46,6 +46,9 @@ Burkett K, Graham J and McNeney B (2006). hapassoc: Software for
 Likelihood Inference of Trait Associations with SNP Haplotypes and Other 
 Attributes. Journal of Statistical Software, \bold{16(2)}:1-19
 }
+\details{
+See the hapassoc vignette, of the same name as the package, for details.
+}
 \seealso{
 \code{\link{pre.hapassoc}},\code{\link{hapassoc}}, 
 \code{\link{summary.hapassoc}}.
