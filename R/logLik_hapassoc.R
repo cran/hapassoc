@@ -100,14 +100,14 @@ probY <- function(myfit){
     probY<- dbinom(y,1,prob=fits) }
 
   if(myfit$family$family=="poisson"){ 
-    probY[i] <- dpois(y[i],lambda=fits[i])}
+    probY <- dpois(y,lambda=fits)}
 
   if(myfit$family$family=="gaussian") {
-    probY<- dnorm(y,mean=fits, sd=sqrt(myfit$dispersionML))}
+    probY<- dnorm(y,mean=fits, sd=sqrt(myfit$dispersion))}
 
   if(myfit$family$family=="Gamma"){
-    probY[i] <- dgamma(y,shape=(myfit$dispersionML)^(-1),
-                       scale=fits/myfit$dispersionML)}
+    probY <- dgamma(y,shape=(myfit$dispersion)^(-1),
+                       scale=fits/myfit$dispersion)}
 
   return(probY)
 }

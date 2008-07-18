@@ -1,5 +1,5 @@
 # Filename: hapassoc.R
-# Version : $Id: hapassoc.R,v 1.35 2006/07/16 23:34:18 sblay Exp $
+# Version : $Id: hapassoc.R,v 1.44 2008/07/18 22:42:49 mcneney Exp $
 
 # hapassoc- Inference of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -21,19 +21,24 @@
 ########################################################################
 
 hapassoc<-function(form, haplos.list, baseline="missing", family=binomial(), 
-             freq=NULL, maxit=50, tol=0.001, start=NULL, verbose=FALSE){
-
- environment(form)<-environment()#set envir of formula to envir w/i hapassoc function
- call <-  match.call()
+                   design="cohort", disease.prob=NULL, freq=NULL, maxit=50, 
+                   tol=0.001, start=NULL, verbose=FALSE){
+environment(form)<-environment()#set envir of formula to envir w/i hapassoc function
+call <-  match.call()
 
 if (is.character(family))
     family <- get(family, mode = "function", envir = parent.frame())
 if (is.function(family))
     family <- family()
+if(design=="cc" && family$family!="binomial") {
+  warning(paste("design is case-control, but family is ",family$family,"; using binomial instead",sep=""))
+  family<-binomial()
+}
 if(family$family=="binomial") family<-binomialNoWarn() 
    # so we don't issue warnings in M step
 
- haplos.names<-names(haplos.list$initFreq)
+haplos.names<-names(haplos.list$initFreq)
+
  # Initial freq values, if no freq specified use initFreq
  if (!is.null(freq)) {
    names(freq)<-haplos.names
@@ -41,29 +46,29 @@ if(family$family=="binomial") family<-binomialNoWarn()
    freq<-haplos.list$initFreq
  }
 
- if(!is.na(all.vars(form)[2]) && all.vars(form)[2]=="." && (baseline=="missing")) { 
-   #Then formula is of form "y ~ ." and no baseline specified
+ if(baseline=="missing") {
+   #no baseline specified
    baseline<-haplos.names[which.max(freq)] 
  }
- column.subset <- colnames(haplos.list$haploDM)!=baseline
- hdat <- cbind(haplos.list$nonHaploDM, haplos.list$haploDM[,column.subset])
- # We used to use model.response to extract the response variable, but
- # this lead to problems in calculating the residuals in the pYgivenX function.
- # It is better to fit the model with the glm function below and then 
- # extract the response from the fitted model object - Brad Nov.2/04
- # response<-model.response(model.frame(form,data=hdat))  
+ if(!is.na(all.vars(form)[2]) && all.vars(form)[2]==".") {
+   #Then formula is of form "y ~ ." 
+   column.subsethaplo <- colnames(haplos.list$haploDM)!=baseline
+   resp<-as.character(all.vars(form)[1])
+   column.subsetnonhaplo <- colnames(haplos.list$nonHaploDM)!=resp
+   form.rhs<-paste(c(names(haplos.list$nonHaploDM[,column.subsetnonhaplo,drop=FALSE]),names(haplos.list$haploDM)[column.subsethaplo]),collapse="+")
+   form<-formula(paste(resp,"~",form.rhs))
+ }
+ hdat <- cbind(haplos.list$nonHaploDM, haplos.list$haploDM)
  colnames(hdat)<- c(colnames(haplos.list$nonHaploDM),
-                    colnames(haplos.list$haploDM[,column.subset]))
+                    colnames(haplos.list$haploDM))
  ID <- haplos.list$ID
- # N<-ID[length(ID)]
- N<-sum(haplos.list$wt)
+ N<-round(sum(haplos.list$wt))
  wts<-haplos.list$wt
  
  # Get the haplotype columns
  haplos<-haplos.list$haploDM
  haploMat<-haplos.list$haploMat
  allHaps<-c(haploMat[,1],haploMat[,2]) #Needed later in hapassoc loop for wt calcs
-
  # Initial beta values calculated from augmented data set
  regr<-glm(form, family=family, data=hdat, weights=wts, start=start) 
 
@@ -74,16 +79,188 @@ if(family$family=="binomial") family<-binomialNoWarn()
  it<-1
  num.prob<-vector(length=nrow(hdat))
  
- # The hapassoc loop
+ # The hapassoc loop for case-control data
 
- while ( (it<maxit) && (betadiff>tol) ){
+ if (design=="cc")    ## use the hybrid method for case-control study
+ {  		
+     n1 <- sum(response[!duplicated(ID)])
+     n0 <- N - n1
+
+     nhaps <- length(freq) 	
+     nhaps.DM <- length(haplos.list$haploDM) 	
+
+   # Construct the design matrix "Des.Mat" for the psuedo-sample.     
+     mf <- model.frame(form, hdat)
+     Des.Mat <- model.matrix(form, mf, contrasts)  
+
+   # Construct the orginal non-haplotype data "nonHap" for the subjects.     
+     nonHap <- haplos.list$nonHaploDM[!duplicated(ID),]
+     nonHap<- as.matrix(nonHap)     
+
+   # Construct the design matrices (array) "DesMat.Arr" for numerator of the 
+   # effective sample-sizes (see formula (13) of Spinka et al.).
+     nonHap.Mat <- matrix(nrow=nrow(nonHap)*length(freq), ncol=ncol(nonHap))
+     for (j in 1:ncol(nonHap))
+        nonHap.Mat[,j] <- c(outer(rep.int(1,length(freq)), nonHap[,j]))
+
+     DesMat.Arr <- array(data=NA, dim=c(nrow(nonHap.Mat), length(beta), nhaps))
+     for (j in 1:nhaps)
+     {
+#       Hap.Mat <- matrix(rep.int(diag(1, nhaps), N), ncol=nhaps, byrow=TRUE)
+       Hap.Mat <- matrix(rep.int(diag(1, length(freq)), N), ncol=length(freq), byrow=TRUE)
+       Hap.Mat[,j] <- Hap.Mat[,j] + 1
+       indPooled <-  match(haplos.list$pooled,names(freq))  
+       if(!any(is.na(indPooled))) { #then there is pooling to do
+         pooled <- vector("numeric",nrow(Hap.Mat))
+         for (k in 1:length(indPooled))
+           pooled <- pooled + Hap.Mat[,indPooled[k]]
+         dm <- data.frame(nonHap.Mat, Hap.Mat[,-indPooled], pooled)
+       }
+       else  dm <- data.frame(nonHap.Mat, Hap.Mat)
+       dimnames(dm)[[2]] <-c(dimnames(haplos.list$nonHaploDM)[[2]], 
+                             colnames(haplos.list$haploDM) )
+       mf <- model.frame(form, dm)
+       DesMat.Arr[,,j] <- model.matrix(form, mf, contrasts)
+     }
+     DMA.ID <- c(outer(rep.int(1,nhaps),unique(ID)))
+
+   # Construct the design matrix "Denom.Mat" for the denominator of the 
+   # effective sample-sizes  
+
+     DiploMat <- matrix(nrow=length(freq)*(length(freq)+1)/2, ncol=length(freq))
+     myInd <- 1
+     for (j in 1:length(freq))  {
+       diag.mat <- diag(1,length(freq))
+       diag.mat[,j] <- diag.mat[,j] + 1
+       DiploMat[myInd:(myInd + length(freq)-j),] <- diag.mat[j:length(freq),]
+       myInd <- myInd + length(freq)-j+1
+     }
+     if(!any(is.na(indPooled))) {
+       pooled <- vector("numeric",nrow(DiploMat))
+       for (k in 1:length(indPooled))
+         pooled <- pooled + DiploMat[,indPooled[k]]
+       DiploMat <- data.frame(DiploMat[,-indPooled], pooled)
+     }
+
+
+     Denom.Mat <- NULL     
+     for (j in 1:ncol(nonHap))
+       Denom.Mat <- cbind(Denom.Mat, c(outer(rep.int(1,nrow(DiploMat)), nonHap[,j])))  
+     for (j in 1:nhaps.DM)
+       Denom.Mat <- cbind(Denom.Mat, rep.int(DiploMat[,j], N))
+       
+     Denom.Mat <- data.frame(Denom.Mat)
+     dimnames(Denom.Mat)[[2]] <- dimnames(dm)[[2]]    
+     mf <- model.frame(form, Denom.Mat)
+     Denom.Mat <- model.matrix(form, mf, contrasts)
+     DenomMat.ID <- c(outer(rep.int(1, nrow(DiploMat)), unique(ID)))
+     
+ 		
+     while ( (it<maxit) && (betadiff>tol) ){
+ 	 	
+    # Multiplicative const for haplo probs: 1 for homo, 2 for het
+
+      haplo.probs<-rep.int(1,nrow(haplos))+isMultiHetero(haplos.list)
+      haplo.probs <- haplo.probs*freq[haploMat[,1]]*freq[haploMat[,2]]
+      phi<-mlPhi(regr) #Compute ML estimate of dispersion param
+      if(is.null(phi)) { #no converergence in ml estimate of phi
+           break() #hapassoc will throw a warning of non-convergence
+      }
+
+      num.prob <- exp(response*(Des.Mat%*%beta))
+      if (!is.null(disease.prob))  # if Pr(D=1) is known, beta0 can be calulated 
+      {   
+         beta0 <- beta[1] - log(n1/n0) + log(disease.prob/(1-disease.prob))
+         num.prob <- num.prob/(1+exp(1+Des.Mat%*%c(beta0,beta[-1]))) 
+      }
+      num.prob <- as.vector(num.prob)*haplo.probs   
+
+    # E step: Calculate the weights for everyone
+    # Use the ID to determine the number of pseudo-individuals in the 
+    # denominator probability
+      wts<-vector("double", length(wts))
+      wts<-.C("getWts", as.integer(nrow(hdat)), as.integer(ID),
+              wts = as.double(wts), as.double(as.vector(num.prob)),
+              PACKAGE="hapassoc")
+      wts <- wts$wts
+
+     
+     if (min(freq)<1.0e-8 | min(wts)<1.0e-8)  
+     {  # if some haplotype frequency is estimated to be 0, 
+     	 # throw a non-convergence warning
+       break()
+     }
+    
+    # M step: Find new estimates using GLM and weighted haplotype counts
+
+    # Find the new betas using old betas as starting value
+      regr <- glm(form, family=family, data=hdat, weights=wts,
+                 control=glm.control(epsilon=1e-08),start=beta)
+      betaNew<-regr$coef
+      fits<-regr$fitted.values
+      betadiff<-max( max(abs(beta-betaNew), na.rm=TRUE),
+	       max(abs(beta-betaNew)/(0.1+abs(betaNew)), na.rm=TRUE) )
+      beta<-betaNew
+
+    # Calculate the expected haplotype counts "Numer.Freq" 
+    # in formula (13) of Spinka el al. (2005) 
+      Numer.Freq <- tapply(c(wts,wts),allHaps,sum)
+
+    # Calculate the effective sample-sizes "Denom.Freq" 
+    # in formula (13) of Spinka el al. (2005)
+      DenomFreq.Nu <- NULL
+      for (j in 1:nhaps)
+      {
+        rr <- r.Omega(DesMat.Arr[,,j], beta, ncases=n1, ncontrols=n0, disease.prob) 
+        rr <- 2*rep.int(freq,N)*rr 
+
+        factors <- unique(DMA.ID)
+        sums <- vector("double",length(factors))
+        rr <- .C("tapply_sum", as.integer(length(rr)), as.integer(factors), 
+           as.double(rr), as.integer(DMA.ID), sums = as.double(sums),
+           PACKAGE="hapassoc")
+        rr <- rr$sums
+        names(rr) <- factors
+
+        DenomFreq.Nu <- cbind(DenomFreq.Nu, rr)
+      }
+      DenomFreq.Nu <- data.frame(DenomFreq.Nu)
+      dimnames(DenomFreq.Nu)[[2]] <- haplos.names
+      DenomFreq.De <- rep.int(get.diplofreq(freq),N)*r.Omega(Denom.Mat,beta, 
+                      ncases=n1,ncontrols=n0,disease.prob)
+
+
+      factors <- unique(DenomMat.ID)
+      sums <- vector("double",length(factors))
+      DenomFreq.De <- .C("tapply_sum", as.integer(length(DenomFreq.De)), 
+                       as.integer(factors), as.double(DenomFreq.De), 
+                       as.integer(DenomMat.ID), sums = as.double(sums),
+                       PACKAGE="hapassoc")
+      DenomFreq.De <- DenomFreq.De$sums      
+
+      Denom.Freq <- apply(DenomFreq.Nu/DenomFreq.De, 2, sum)  
+    
+    # Update the haplotype frequencies  
+      freq <- Numer.Freq/Denom.Freq
+      freq <- freq/sum(freq)
+    
+      if (verbose) 
+	      cat("iteration",it,": value of convergence criterion =",betadiff,"\n")
+
+      it<-it+1
+   } # end of while
+ } # end of if (design=="cc")
+
+ else   # If design is not "cc", use original hapassoc code.
+ { 
+   while ( (it<maxit) && (betadiff>tol) ){
    
         # Vector of P(Y|X)*P(X) probability 
 	# If the person is unaffected, P(Y=0) is 1-fitted value
 	# otherwise it is the fitted value 
    
         # Multiplicative const for haplo probs: 1 for homo, 2 for het
-        haplo.probs<-rep(1,nrow(haplos))+isMultiHetero(haplos.list)
+        haplo.probs<-rep.int(1,nrow(haplos))+isMultiHetero(haplos.list)
         haplo.probs <- haplo.probs*freq[haploMat[,1]]*freq[haploMat[,2]]
 
 	phi<-mlPhi(regr) #Compute ML estimate of dispersion param
@@ -98,7 +275,7 @@ if(family$family=="binomial") family<-binomialNoWarn()
 
         wts<-vector("double", length(wts))
         wts<-.C("getWts", as.integer(nrow(hdat)), as.integer(ID),
-                 wts = as.double(wts), as.double(as.vector(num.prob)), 
+                 wts = as.double(wts), as.double(as.vector(num.prob)),
                  PACKAGE="hapassoc")
         wts <- wts$wts
 
@@ -121,8 +298,10 @@ if(family$family=="binomial") family<-binomialNoWarn()
 	  cat("iteration",it,": value of convergence criterion =",betadiff,"\n")
 
         it<-it+1
- }
+   } # end of while
+ } # end of else: design != "cc" 
  
+ 	 
  if(betadiff>tol) { #did not converge
     warning(paste("No convergence in hapassoc in",it,"iterations\n")) 
     ans<-list(converged=FALSE)
@@ -136,7 +315,7 @@ if(family$family=="binomial") family<-binomialNoWarn()
  # Added more elements to EMresults list for later call to
  # log.likelihood and renamed dispersion (KB 18/02/2006)
  EMresults <- list(beta=beta, gamma=freq, fits=fits, wts=wts, ID=ID,
-                   glm.final.fit=regr,dispersionML=phi, family=family,
+                   glm.final.fit=regr,dispersion=phi, family=family,
                    response=response)
 
  names(haplos.list)[names(haplos.list)=="freq"] <- "gamma"
@@ -145,13 +324,17 @@ if(family$family=="binomial") family<-binomialNoWarn()
 
  # Compute the log-likelihood so that results can be returned
  # from function (KB 18/02/2006)
- loglik <- loglikelihood(haplos.list,EMresults)
+ if(design!="cc") {
+   loglik <- loglikelihood(haplos.list,EMresults)
+ } else {
+   loglik<-NA
+ }
 
 
  # Added the model equation and log-likelihood as elements
  # returned from function (KB 18/02/2006)
  ans<-list(it=it, beta=beta, freq=freq, fits=fits, wts=wts, ID=ID,
-           var=var.est, dispersionML=phi, family=family, response=response,
+           var=var.est, dispersion=phi, family=family, response=response,
            converged=TRUE, model=form,loglik=loglik, call=call)
 
  class(ans)<-"hapassoc"
@@ -160,6 +343,35 @@ if(family$family=="binomial") family<-binomialNoWarn()
 }
 
 ## Other functions called in hapassoc:
+
+#############################################################################
+## Function to calculate r.Omega
+r.Omega <- function(des.mat, beta, ncases, ncontrols, disease.prob=NULL)
+{
+ # Assuming a rare disease 	
+   rr <- 1 + exp(des.mat%*%beta)  
+ # If Pr(D=1) is known, beta_0 can be calculated
+   if (!is.null(disease.prob))    
+   {
+ 	  beta0 <- beta[1] - log(ncases/ncontrols) + log(disease.prob/(1-disease.prob))
+ 	  rr <- rr / (1 + exp(des.mat%*%c(beta0,beta[-1])))
+   }	
+   return(as.vector(rr))
+}
+ 
+#############################################################################
+# Function to calcuate the diplotype frequencies, given haplotype frequencies 
+get.diplofreq <- function(freq)
+{
+  nhaplos <- length(freq)
+  dipprob <- 2*kronecker(freq,t(freq))
+  diag(dipprob) <- diag(dipprob)/2
+  dipprob.vec<-NULL
+  for(i in 1:nhaplos) 
+    dipprob.vec<-c(dipprob.vec,dipprob[i:nhaplos,i])
+  return (dipprob.vec)
+}
+
 
 ########################################################################
 
@@ -306,7 +518,7 @@ EMvar<-function(haplos.list, results, family)  {
 
    while (i<length(ID.mis)){
 	pseudo.index<-ID.mis==ID.mis[i]
-	ones.vec<-rep(1, sum(pseudo.index)*sum(pseudo.index))
+	ones.vec<-rep.int(1, sum(pseudo.index)*sum(pseudo.index))
 	block<-matrix(ones.vec, nrow=sum(pseudo.index), ncol=sum(pseudo.index))
 	block.size<-sum(pseudo.index)
 	B[i:(i+block.size-1), i:(i+block.size-1)]<-block
@@ -459,3 +671,4 @@ IPhiGamma<-function(myfit,score,phi) {
 }
 
   
+

@@ -3,7 +3,8 @@
 \title{Return likelihood ratio test of haplotype effect}
 \description{
 This function returns the likelihood ratio test statistic comparing
-two nested models fit with \code{hapassoc}
+two nested models fit with \code{hapassoc} for cohort or cross-sectional
+data.
 }
 \usage{\method{anova}{hapassoc}(object, redfit, display=TRUE, \ldots)}
 \arguments{

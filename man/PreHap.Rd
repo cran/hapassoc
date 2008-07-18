@@ -22,7 +22,7 @@ Missing single-locus genotypes, up to a maximum of maxMissingGenos (see
 below), are allowed, but subjects with missing data in more than
 maxMissingGenos, or with missing non-SNP data, are removed.
 Initial estimates of haplotype frequencies are then obtained using the 
-EM algorithm applied to the genotype data. 
+EM algorithm applied to the genotype data pooled over all subjects.
 Haplotypes with frequencies below a user-specified tolerance (zero.tol)
 are assumed not to exist and are removed from further consideration.
 (Pseudo-individuals having haplotypes of negligible frequency are deleted and 

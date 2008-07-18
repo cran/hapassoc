@@ -5,7 +5,8 @@
 This function is used to return the log-likelihood at the maximum 
 likelihood estimates computed by \code{hapassoc} and to return
 the number of parameters fit by \code{hapassoc} 
-(i.e. the degrees of freedom in \code{R}). 
+(i.e. the degrees of freedom in \code{R}) for cohort or
+cross-sectional data. 
 }
 \usage{\method{logLik}{hapassoc}(object, \ldots)}
 \arguments{
@@ -15,7 +16,8 @@ the number of parameters fit by \code{hapassoc}
 function (currently unused)}
 }
 \value{
-\item{logLik}{log-likelihood computed at the maximum likelihood estimates}
+\item{logLik}{log-likelihood computed at the maximum likelihood estimates
+if \code{design="cohort"}, or \code{NA} if \code{design="cc"}}
 \item{df}{number of parameters in the model (i.e. regression coefficients,
 any dispersion parameters and haplotype 
 frequencies). This is not the residual

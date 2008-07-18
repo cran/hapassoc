@@ -1,5 +1,5 @@
 # Filename: summaryHap.R
-# Version : $Id: summaryHap.R,v 1.12 2006/07/20 19:41:36 mcneney Exp $
+# Version : $Id: summaryHap.R,v 1.13 2008/07/18 22:43:35 mcneney Exp $
 
 # HapAssoc- Estimation of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -29,9 +29,9 @@ if(family=="Gamma"){
  #The ML estimate is overly sensitive to round-off errors in small 
  #responses and to departures from the Gamma model (Mc&N pp295-296).
   dispersion=momentPhiGamma(object) 
-  object$var<-object$var*dispersion/(object$dispersionML)
+  object$var<-object$var*dispersion/(object$dispersion)
 } else {
-  dispersion=object$dispersionML
+  dispersion=object$dispersion
 }
 
 numbeta<-length(object$beta)
