@@ -1,3 +1,111 @@
+2008-07-19 Version 1.2-1
+
+Hapassoc was originally developed to provide likelihood inference for 
+prospectively collected (cohort) or cross-sectional data.  We have
+made some provisions to accommodate case-control data (with future
+plans for more) by including an implementation of association and haplotype
+frequency estimators arising from the modified prospective score equations 
+(MPSE) of Spinka et al. (2005). The implementation is due to Chen 2006.
+
+A summary of changes to the package follows.
+
+Documentation
+-------------
+
+- Reduced emphasis on likelihood inference because hapassoc now 
+implements association estimators for case-control data from an 
+unbiased estimating equation approach (Spinka et al. 2005).
+
+- Added documentation of two new arguments to hapassoc:
+ * design can either be "cohort" (default) for cohort or cross-sectional
+   data or "cc" for case-control
+
+ * disease.prob specifies the marginal probability of disease for 
+   the case-control approach. See the Details section of the hapassoc
+   documentation for more.
+
+- Revised the "Details" section of the hapassoc help file. Added the 
+following:
+
+"When the study design is case-control, i.e. genotypes and
+non-genetic attributes have been sampled retrospectively given disease
+status, naive application of prospective maximum likelihood methods
+can yield biased inference (Spinka et al., 2005, Chen, 2006).
+Therefore, when \code{design="cc"}, the algorithm solves the modified 
+prospective score equations or MPSE (Spinka et al. 2005) for regression
+and haplotype frequency parameters. The implementation in \pkg{hapassoc} 
+is due to Chen (2006).  In general, the MPSE approach requires that
+the marginal probability of disease,  P(D=1), be known.
+An exception is when the disease is rare; hence, when
+\code{disease.prob=NULL} (the default) a rare disease is assumed.
+The variance-covariance matrix of the regression parameter and
+haplotype frequency estimators is approximated as described
+in Chen (2006). Limited simulations indicate that the resulting 
+standard errors for regression parameters perform well, but not the
+standard errors for haplotype frequencies, which should be ignored.
+For case-control data, we hope to implement the variance-covariance 
+estimator of Spinka et al. (2005) in a future version of \pkg{hapassoc}."
+
+
+Source files
+------------
+
+In DESCRIPTION:
+- Noted Zhijian Chen's contribution
+
+In R/hapassoc.R:
+- Added error check to make sure family=binomial() if design="cc"
+
+- Changed code that handles formulae of the form "y ~ ." Previously,
+when hapassoc was passed such a formula it dropped the baseline haplotype 
+from the design matrix, which has the effect of using the baseline haplotype
+as the baseline in all calls to glm. However, the MPSE code needs all
+haplotypes to be present in the data frame. The modified code paste()s 
+together the appropriate formula; for example, if there are 2 SNPs and 
+h00 is the baseline haplotype, and there are no non-genetic
+covariates, paste together the formula  y ~ h01 + h10 + h11.
+None of the columns in the design matrix are dropped.
+
+- Where there used to be just a single while loop to do the EM algorithm
+there is now an if-else. If design="cc", do the MPSE code, else
+do the regular hapassoc code.  In the "if", there are a lot of 
+preliminary calculations that need to be done (about 75 lines of code)
+before the while loop.
+
+- The output item "dispersionML" has been renamed dispersion. This required
+some changes in the log-likelihood code too.
+
+- The outut item "loglik" is set to NA when design="cc"; the MPSE are
+estimating equations, so this does not apply.
+
+- Added utility functions r.Omega() and get.diplofreq() to the hapassoc.R
+source file. These are used in the MPSE code.
+
+In src/tapply_sum.c:
+- New file that contains the function tapply_sum written by S. Blay to 
+speed up the MPSE code.
+
+Future work
+-----------
+
+- The Spinka et al. (2005) variance calculation for case-control data has 
+not yet been implemented. Currently, an approximation shown by 
+Chen (2006) to have reasonably good properties is used. 
+
+References
+----------
+Chen, Z. (2006): Approximate likelihood inference for haplotype risks
+in case-control studies of a rare disease, Masters thesis, Statistics
+and Actuarial Science, Simon Fraser University, available at
+\url{http://www.stat.sfu.ca/people/alumni/Theses/Chen-2006.pdf}.
+
+Spinka, C., Carroll, R. J. & Chatterjee, N. (2005). Analysis of
+case-control studies of genetic and environmental factors with missing
+genetic information and haplotype-phase ambiguity.
+Genetic Epidemiology, \bold{29}, 108-127.
+
+
+
 2006-07-20 Version 1.1
 * fixed bug to enable formula = dependent ~ 1 in hapassoc() 
   and summary.hapassoc()

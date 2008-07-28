@@ -1,5 +1,5 @@
 # Filename: hapassoc.R
-# Version : $Id: hapassoc.R,v 1.44 2008/07/18 22:42:49 mcneney Exp $
+# Version : $Id: hapassoc.R,v 1.45 2008/07/29 00:38:30 kellyb Exp $
 
 # hapassoc- Inference of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -313,14 +313,12 @@ haplos.names<-names(haplos.list$initFreq)
  freq <- as.matrix(freq) 
 
  # Added more elements to EMresults list for later call to
- # log.likelihood and renamed dispersion (KB 18/02/2006)
- EMresults <- list(beta=beta, gamma=freq, fits=fits, wts=wts, ID=ID,
+ # log.likelihood and renamed dispersion (KB 18/02/2006) and
+ # freq (KB 28/07/2008) 
+ EMresults <- list(beta=beta, freq=freq, fits=fits, wts=wts, ID=ID,
                    glm.final.fit=regr,dispersion=phi, family=family,
                    response=response)
 
- names(haplos.list)[names(haplos.list)=="freq"] <- "gamma"
- names(EMresults)[names(EMresults)== "freq"] <- "gamma"
- var.est <- EMvar(haplos.list, EMresults, family)
 
  # Compute the log-likelihood so that results can be returned
  # from function (KB 18/02/2006)
@@ -330,6 +328,9 @@ haplos.names<-names(haplos.list$initFreq)
    loglik<-NA
  }
 
+ names(haplos.list)[names(haplos.list) == "freq"] <- "gamma"
+ names(EMresults)[names(EMresults) == "freq"] <- "gamma"
+ var.est <- EMvar(haplos.list, EMresults, family)
 
  # Added the model equation and log-likelihood as elements
  # returned from function (KB 18/02/2006)

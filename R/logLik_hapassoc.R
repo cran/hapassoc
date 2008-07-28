@@ -64,17 +64,16 @@ loglikelihood <- function(haplos.list, EMresults){
   
   # Get previous results
   haplos<-haplos.list$haploMat
-  gamma <- EMresults$gamma
+  freq <- EMresults$freq
   IDs <- EMresults$ID
 
   # Get the P(X) part. These two commands came from function hapassoc
   haplo.probs <- rep(1, nrow(haplos)) + isMultiHetero(haplos.list)
-  haplo.probs <- haplo.probs * gamma[haplos[, 1],] * gamma[haplos[,2],]
+  haplo.probs <- haplo.probs * freq[haplos[, 1],] * freq[haplos[,2],]
   names(haplo.probs) <- NULL
 
   # Determine vector P(Y|X) for all individuals using the function
-  # probY. ** Check to make sure this doesn't overwhite another**
-  # and multiply by haplo.probs
+  # probY and multiply by haplo.probs
   like.i <- probY(EMresults)*haplo.probs
 
   # Calculate log likelihood over all individuals by first summing
@@ -106,8 +105,9 @@ probY <- function(myfit){
     probY<- dnorm(y,mean=fits, sd=sqrt(myfit$dispersion))}
 
   if(myfit$family$family=="Gamma"){
-    probY <- dgamma(y,shape=(myfit$dispersion)^(-1),
-                       scale=fits/myfit$dispersion)}
+    a = 1/myfit$dispersion
+    s = fits/a
+    probY <- dgamma(y,shape=a,scale=s)}
 
   return(probY)
 }
