@@ -1,5 +1,5 @@
 # Filename: hapassoc.R
-# Version : $Id: hapassoc.R,v 1.45 2008/07/29 00:38:30 kellyb Exp $
+# Version : $Id: hapassoc.R,v 1.57 2008/08/12 13:29:04 mcneney Exp $
 
 # hapassoc- Inference of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -94,15 +94,26 @@ haplos.names<-names(haplos.list$initFreq)
      Des.Mat <- model.matrix(form, mf, contrasts)  
 
    # Construct the orginal non-haplotype data "nonHap" for the subjects.     
+   # The non-haplo data may include factors, but we require the numeric
+   # columns of the design matrix. We will extract these from Des.Mat by
+   # trimming off haplotype columns. Haplotype columns appear last in Des.Mat
      nonHap <- haplos.list$nonHaploDM[!duplicated(ID),]
-     nonHap<- as.matrix(nonHap)     
+     #nonHap<- as.matrix(nonHap)     
 
    # Construct the design matrices (array) "DesMat.Arr" for numerator of the 
    # effective sample-sizes (see formula (13) of Spinka et al.).
      nonHap.Mat <- matrix(nrow=nrow(nonHap)*length(freq), ncol=ncol(nonHap))
-     for (j in 1:ncol(nonHap))
-        nonHap.Mat[,j] <- c(outer(rep.int(1,length(freq)), nonHap[,j]))
-
+     nonHap.Mat<-data.frame(nonHap.Mat)
+     for (j in 1:ncol(nonHap)) {
+        if(is.numeric(nonHap[,j])) {
+          nonHap.Mat[,j] <- c(outer(rep.int(1,length(freq)), nonHap[,j]))
+        } else { #assume factor
+          if(!is.factor(nonHap[,j])) stop("non-numeric, non-factor covariate")
+          n.nonHapj<-as.numeric(nonHap[,j])
+          nonHap.Matj <- c(outer(rep.int(1,length(freq)), n.nonHapj))
+          nonHap.Mat[,j]<-factor(nonHap.Matj,labels=levels(nonHap[,j]))
+        }
+     }
      DesMat.Arr <- array(data=NA, dim=c(nrow(nonHap.Mat), length(beta), nhaps))
      for (j in 1:nhaps)
      {
@@ -142,14 +153,20 @@ haplos.names<-names(haplos.list$initFreq)
        DiploMat <- data.frame(DiploMat[,-indPooled], pooled)
      }
 
-
-     Denom.Mat <- NULL     
-     for (j in 1:ncol(nonHap))
-       Denom.Mat <- cbind(Denom.Mat, c(outer(rep.int(1,nrow(DiploMat)), nonHap[,j])))  
+     Denom.Mat<-matrix(NA,nrow=nrow(DiploMat)*nrow(nonHap),ncol=ncol(nonHap))
+     Denom.Mat<-as.data.frame(Denom.Mat)
+     for (j in 1:ncol(nonHap)) {
+       if(is.numeric(nonHap[,j])) {
+         Denom.Mat[,j] <- c(outer(rep.int(1,nrow(DiploMat)), nonHap[,j]))  
+       } else {
+         n.nonHapj<-as.numeric(nonHap[,j])
+         Denom.Matj<- c(outer(rep.int(1,nrow(DiploMat)), n.nonHapj))  
+         Denom.Mat[,j]<-factor(Denom.Matj,labels=levels(nonHap[,j]))
+       }
+     }
      for (j in 1:nhaps.DM)
-       Denom.Mat <- cbind(Denom.Mat, rep.int(DiploMat[,j], N))
+       Denom.Mat <- data.frame(Denom.Mat, rep.int(DiploMat[,j], N))
        
-     Denom.Mat <- data.frame(Denom.Mat)
      dimnames(Denom.Mat)[[2]] <- dimnames(dm)[[2]]    
      mf <- model.frame(form, Denom.Mat)
      Denom.Mat <- model.matrix(form, mf, contrasts)
@@ -670,6 +687,4 @@ IPhiGamma<-function(myfit,score,phi) {
   n<-sum(wts)
   return( 2*x*(t(score)%*%wts) + n*x^4*(trigamma(x) - 1/x) )
 }
-
-  
 
