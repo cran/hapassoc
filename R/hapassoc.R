@@ -1,5 +1,5 @@
 # Filename: hapassoc.R
-# Version : $Id: hapassoc.R,v 1.57 2008/08/12 13:29:04 mcneney Exp $
+# Version : $Id: hapassoc.R,v 1.58 2009/11/19 01:03:43 mcneney Exp $
 
 # hapassoc- Inference of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -97,7 +97,7 @@ haplos.names<-names(haplos.list$initFreq)
    # The non-haplo data may include factors, but we require the numeric
    # columns of the design matrix. We will extract these from Des.Mat by
    # trimming off haplotype columns. Haplotype columns appear last in Des.Mat
-     nonHap <- haplos.list$nonHaploDM[!duplicated(ID),]
+     nonHap <- haplos.list$nonHaploDM[!duplicated(ID),,drop=FALSE]
      #nonHap<- as.matrix(nonHap)     
 
    # Construct the design matrices (array) "DesMat.Arr" for numerator of the 
