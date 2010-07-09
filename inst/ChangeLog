@@ -1,3 +1,10 @@
+2010-7-5 Version 1.2-4
+* hapassoc() now handles the case of all haplotypes being included in
+  the model formula. If 'baseline' haplotype is given, it will be the 
+  reference group. If not, the most frequent haplotype will be the
+  reference group.
+
+
 2009-11-19 Version 1.2-3
 
 * fixed bug: hapassoc() failed when using the design="cc" option with no

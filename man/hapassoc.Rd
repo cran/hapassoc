@@ -17,7 +17,8 @@ start = NULL, verbose=FALSE)}
 \arguments{
 \item{form}{model equation in usual R format}
 \item{haplos.list}{list of haplotype data from \code{\link{pre.hapassoc}}}
-\item{baseline}{optional, haplotype to be used for baseline coding. Default
+\item{baseline}{optional, haplotype to be used for baseline coding if the model formula
+either includes all haplotypes or is of the form "y~." for example. Default
 is the most frequent haplotype according to the initial haplotype frequency
 estimates returned by \code{\link{pre.hapassoc}}.}
 \item{family}{binomial, poisson, gaussian or gamma are supported, 

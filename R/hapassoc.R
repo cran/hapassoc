@@ -1,5 +1,5 @@
 # Filename: hapassoc.R
-# Version : $Id: hapassoc.R,v 1.58 2009/11/19 01:03:43 mcneney Exp $
+# Version : $Id: hapassoc.R,v 1.59 2010/03/25 06:17:43 kellyb Exp $
 
 # hapassoc- Inference of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -50,6 +50,21 @@ haplos.names<-names(haplos.list$initFreq)
    #no baseline specified
    baseline<-haplos.names[which.max(freq)] 
  }
+
+ if ( length( setdiff( colnames(haplos.list$haploDM), all.vars(form)[2:length(all.vars(form))]))==0){
+   #Too many haplotypes specified in model formula. Must determine a baseline category and 
+   #create a new model formula. 
+   column.subsethaplo <- colnames(haplos.list$haploDM) != baseline
+   resp <- as.character(all.vars(form)[1])
+   column.subsetnonhaplo <- intersect(colnames(haplos.list$nonHaploDM),all.vars(form)[2:length(all.vars(form))])
+   form.rhs <- paste(c(names(haplos.list$nonHaploDM[, column.subsetnonhaplo, 
+            drop = FALSE]), names(haplos.list$haploDM)[column.subsethaplo]), 
+            collapse = "+")
+   form <- formula(paste(resp, "~", form.rhs))
+   cat(paste("Formula contained all possible haplotypes; using ",baseline," as reference 
+category\n\n"))
+ }
+
  if(!is.na(all.vars(form)[2]) && all.vars(form)[2]==".") {
    #Then formula is of form "y ~ ." 
    column.subsethaplo <- colnames(haplos.list$haploDM)!=baseline
