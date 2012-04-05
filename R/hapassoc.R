@@ -1,5 +1,5 @@
 # Filename: hapassoc.R
-# Version : $Id: hapassoc.R,v 1.59 2010/03/25 06:17:43 kellyb Exp $
+# Version : $Id: hapassoc.R,v 1.60 2012/04/05 04:09:37 mcneney Exp $
 
 # hapassoc- Inference of trait-haplotype associations in the presence of uncertain phase
 # Copyright (C) 2003  K.Burkett, B.McNeney, J.Graham
@@ -540,7 +540,7 @@ EMvar<-function(haplos.list, results, family)  {
    der2.gamma<-1/gamma^2
 
    G1<-diag(der.gamma)
-   G<-G1[,1:(num.gamma-1)]
+   G<-G1[,1:(num.gamma-1),drop=FALSE]
    G[num.gamma,]<-G1[num.gamma, num.gamma]
 
    ## Block diagonal matrix
@@ -575,7 +575,12 @@ EMvar<-function(haplos.list, results, family)  {
 
    ## Bottom block
 
-   Ic.cov<- diag(num.haplo[1:(num.gamma-1)]*der2.gamma[1:(num.gamma-1)])+der2.gamma[num.gamma]*num.haplo[num.gamma]*ones.mat
+   if(num.gamma>2) {
+     Ic.cov<- diag(num.haplo[1:(num.gamma-1)]*der2.gamma[1:(num.gamma-1)])+der2.gamma[num.gamma]*num.haplo[num.gamma]*ones.mat
+   } else { # first term in above sum is a scalar s, 
+            # and diag(s) returns an s-by-s matrix -- not what we want
+     Ic.cov<- num.haplo[1:(num.gamma-1)]*der2.gamma[1:(num.gamma-1)]+der2.gamma[num.gamma]*num.haplo[num.gamma]*ones.mat
+   }
 
    ## Full block diagonal matrix (combine top, middle and bottom blocks)
 

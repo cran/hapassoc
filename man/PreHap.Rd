@@ -51,7 +51,7 @@ variables used to form haplotypes and a list of other non-genetic
 variables should be printed; default is TRUE.}
 }
 \value{
-\item{haplotest}{logical, TRUE if some haplotypes were pooled in the risk model}
+\item{haplotest}{logical, TRUE if some haplotypes had frequency less than \code{zero.tol} and are assumed not to exist}
 \item{initFreq}{initial estimates of haplotype frequencies}
 \item{zeroFreqHaplos}{list of haplotypes assumed not to exist}
 \item{pooledHaplos}{list of haplotypes pooled into a single category in the design matrix}

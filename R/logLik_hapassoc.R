@@ -37,7 +37,7 @@ anova.hapassoc <- function(object,redfit,display=TRUE,...){
 
   dfs <- dim(fullfit$var)[1]-dim(redfit$var)[1]
   LRTstat <- 2*(full.like-red.like)
-  pval <- pchisq(LRTstat,df=dfs,lower=FALSE)
+  pval <- pchisq(LRTstat,df=dfs,lower.tail=FALSE)
 
   if (display==TRUE){
     cat("\n\thapassoc: likelihood ratio test\n\n")
