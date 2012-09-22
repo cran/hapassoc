@@ -1,3 +1,8 @@
+2012-9-20 Version 1.2-6
+* Changes to the package so that only public R functions are  now used. 
+
+2012-04-05 Version 1.2-5
+
 2010-7-5 Version 1.2-4
 * hapassoc() now handles the case of all haplotypes being included in
   the model formula. If 'baseline' haplotype is given, it will be the 

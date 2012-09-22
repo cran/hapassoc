@@ -34,7 +34,7 @@ if(design=="cc" && family$family!="binomial") {
   warning(paste("design is case-control, but family is ",family$family,"; using binomial instead",sep=""))
   family<-binomial()
 }
-if(family$family=="binomial") family<-binomialNoWarn() 
+#if(family$family=="binomial") family<-binomialNoWarn() 
    # so we don't issue warnings in M step
 
 haplos.names<-names(haplos.list$initFreq)
@@ -70,7 +70,8 @@ category\n\n"))
    column.subsethaplo <- colnames(haplos.list$haploDM)!=baseline
    resp<-as.character(all.vars(form)[1])
    column.subsetnonhaplo <- colnames(haplos.list$nonHaploDM)!=resp
-   form.rhs<-paste(c(names(haplos.list$nonHaploDM[,column.subsetnonhaplo,drop=FALSE]),names(haplos.list$haploDM)[column.subsethaplo]),collapse="+")
+   form.rhs<-paste(c(names(haplos.list$nonHaploDM[,column.subsetnonhaplo,drop=FALSE]),
+				   names(haplos.list$haploDM)[column.subsethaplo]),collapse="+")
    form<-formula(paste(resp,"~",form.rhs))
  }
  hdat <- cbind(haplos.list$nonHaploDM, haplos.list$haploDM)
@@ -85,8 +86,26 @@ category\n\n"))
  haploMat<-haplos.list$haploMat
  allHaps<-c(haploMat[,1],haploMat[,2]) #Needed later in hapassoc loop for wt calcs
  # Initial beta values calculated from augmented data set
- regr<-glm(form, family=family, data=hdat, weights=wts, start=start) 
-
+ if (family$family=="binomial"){
+	 regr=tryCatch( glm(form, family=family, 
+					 data=hdat, weights=wts, start=start),
+			 
+			 warning = function(w) {
+				 
+				 teststring="non-integer #successes in a binomial glm!"
+				 if (teststring==conditionMessage(w)){
+					 suppressWarnings(glm(form, family=family, 
+									 data=hdat, weights=wts, start=start))
+				 } else {
+					 glm(form, family=family, data=hdat, weights=wts, start=start)
+				 }
+			 }
+	 
+	 )
+ } else { 
+	 regr<-glm(form, family=family, data=hdat, weights=wts, start=start)
+ }
+ 
  response<-regr$y #Change added Nov.2/04 to extract response from fitted model
  beta<-regr$coef
  fits<-regr$fitted.values
@@ -226,8 +245,31 @@ category\n\n"))
     # M step: Find new estimates using GLM and weighted haplotype counts
 
     # Find the new betas using old betas as starting value
-      regr <- glm(form, family=family, data=hdat, weights=wts,
-                 control=glm.control(epsilon=1e-08),start=beta)
+    
+	if (family$family=="binomial"){
+		regr=tryCatch( glm(form, family=family, data=hdat, weights=wts, 
+						control=glm.control(epsilon=1e-08),start=beta),
+					 
+					 warning = function(w) {
+						 
+						 teststring="non-integer #successes in a binomial glm!"
+						 if (teststring==conditionMessage(w)){
+							 suppressWarnings(glm(form, family=family, data=hdat, weights=wts, 
+											 control=glm.control(epsilon=1e-08),start=beta))
+						 } else {
+							 glm(form, family=family, data=hdat, weights=wts, 
+									 control=glm.control(epsilon=1e-08),start=beta)
+						 }
+					 }
+			 
+			 )
+		 } else { 
+			 regr <- glm(form, family=family, data=hdat, weights=wts,
+					 control=glm.control(epsilon=1e-08),start=beta)
+		 }		 
+		 
+		 
+		 
       betaNew<-regr$coef
       fits<-regr$fitted.values
       betadiff<-max( max(abs(beta-betaNew), na.rm=TRUE),
@@ -314,22 +356,42 @@ category\n\n"))
 	# M step: Find new estimates using GLM and weighted haplotype counts
 
 	# Find the new betas using old betas as starting value
-        regr <- glm(form, family=family, data=hdat, weights=wts,
-                    control=glm.control(epsilon=1e-08),start=beta)
-
-        betaNew<-regr$coef
+        
+	if (family$family=="binomial"){
+		regr=tryCatch( glm(form, family=family, data=hdat, weights=wts, 
+						control=glm.control(epsilon=1e-08),start=beta),
+						
+						warning = function(w) {
+							
+							teststring="non-integer #successes in a binomial glm!"
+							if (teststring==conditionMessage(w)){
+								suppressWarnings(glm(form, family=family, data=hdat, weights=wts, 
+												control=glm.control(epsilon=1e-08),start=beta))
+							} else {
+								glm(form, family=family, data=hdat, weights=wts, 
+										control=glm.control(epsilon=1e-08),start=beta)
+							}
+						}
+				
+				)
+	} else { 
+		regr <- glm(form, family=family, data=hdat, weights=wts,
+				control=glm.control(epsilon=1e-08),start=beta)
+	}	
+			
+    betaNew<-regr$coef
    	fits<-regr$fitted.values
 	betadiff<-max( max(abs(beta-betaNew), na.rm=TRUE),
-	 max(abs(beta-betaNew)/(0.1+abs(betaNew)), na.rm=TRUE) )   	
+	max(abs(beta-betaNew)/(0.1+abs(betaNew)), na.rm=TRUE) )   	
 	beta<-betaNew
 
 	# Find the new freqs, weighted sum of haplotypes
-        freq <- tapply(c(wts,wts),allHaps,sum)/(2*N)
+    freq <- tapply(c(wts,wts),allHaps,sum)/(2*N)
 
 	if(verbose) 
 	  cat("iteration",it,": value of convergence criterion =",betadiff,"\n")
 
-        it<-it+1
+    it<-it+1
    } # end of while
  } # end of else: design != "cc" 
  
