@@ -1,3 +1,6 @@
+2014-08-25 Version 1.2-7
+* Moved vignettes to directory vignettes, as required by CRAN
+
 2012-9-20 Version 1.2-6
 * Changes to the package so that only public R functions are  now used. 
 

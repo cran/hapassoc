@@ -1,4 +1,4 @@
-9a1b2b32f848289cc1c0601d34e77ebe *DESCRIPTION
+45d31b73926fe13b30a0b294be8f7e6f *DESCRIPTION
 3d3b0f1f9d5928f250d305425806c2ad *NAMESPACE
 4d5602e49292a50a7000f21bdb784bb5 *R/PreHap.R
 64ecb9cc66e1ed9f6d6487df44caa506 *R/RecodeHaplos.R
@@ -9,11 +9,10 @@ a1ce021887bd89f1de189ac756856315 *R/zzz.R
 2a7ce25f764750cc852972f2e95613c1 *data/hypoDat.txt.gz
 2eca45e79d5939467c45b0c7266114fb *data/hypoDatGeno.txt.gz
 66797a18b0fc5640dd968a93a31d6c27 *inst/CITATION
-06376b7034a432b2b25f3c82f8a114e7 *inst/ChangeLog
-a802d4da44595fb39e075ecfd768225e *inst/doc/burkett_biblio.bib
+11863af61d595bc3bbc099f556b38627 *inst/ChangeLog
+e8e284ba2e19582d0367a2d20023291f *inst/doc/hapassoc.R
 c65113470362e65fda53ca7f9abd5d49 *inst/doc/hapassoc.Rnw
-74c71ddd2c4984d86eead8db0fd84bb7 *inst/doc/hapassoc.pdf
-b9564ddd59a06782310989e8f33db55e *inst/doc/jsslogo.jpg
+18d9817a13d2a0713405a64f94ecd822 *inst/doc/hapassoc.pdf
 91b89767ae643f76b6cbed0853fe2d6f *man/PreHap.Rd
 f8e4d88bd8f0074f9dae8ac96f68436e *man/anova_hapassoc.Rd
 ee5b107776d0d2f664e68d4692f7fe8e *man/hapassoc.Rd
@@ -23,3 +22,6 @@ bb2b0c2331499bcd246b8984e330c56f *man/hypoDat.Rd
 34a7a932c53a3a1d73d2d3b1577d11d1 *man/summaryHap.Rd
 81eb8a822397bb2b67e4921da8f92dd8 *src/getWts.c
 430e0f2946f58d33bacfc9261fa3c4ff *src/tapply_sum.c
+a802d4da44595fb39e075ecfd768225e *vignettes/burkett_biblio.bib
+c65113470362e65fda53ca7f9abd5d49 *vignettes/hapassoc.Rnw
+b9564ddd59a06782310989e8f33db55e *vignettes/jsslogo.jpg
