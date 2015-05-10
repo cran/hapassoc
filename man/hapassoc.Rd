@@ -113,7 +113,7 @@ Attributes. Journal of Statistical Software, \bold{16(2)}:1-19
 Chen, Z. (2006): Approximate likelihood inference for haplotype risks
 in case-control studies of a rare disease, Masters thesis, Statistics
 and Actuarial Science, Simon Fraser University, available at
-\url{http://www.stat.sfu.ca/people/alumni/Theses/Chen-2006.pdf}.
+\url{https://www.stat.sfu.ca/content/dam/sfu/stat/alumnitheses/MiscellaniousTheses/Chen-2006.pdf}.
 
 Spinka, C., Carroll, R. J. & Chatterjee, N. (2005). Analysis of 
 case-control studies of genetic and environmental factors with missing 

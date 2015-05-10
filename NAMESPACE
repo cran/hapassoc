@@ -1,2 +1,5 @@
-export(hapassoc, pre.hapassoc, summary.hapassoc, anova.hapassoc, logLik.hapassoc)
+export(hapassoc, pre.hapassoc)
+S3method(anova, hapassoc)
+S3method(logLik, hapassoc)
+S3method(summary, hapassoc)
 S3method(print, summary.hapassoc)

@@ -24,7 +24,7 @@ example.regr <- hapassoc(affected ~ attr + h000+ h010 + h011 + h100 + pooled,
                      example.pre.hapassoc, family=binomial())
 
 # Summarize the results:
-summary.hapassoc(example.regr) # or just summary(example.regr)
+summary(example.regr)
 
 # Results:
 #$coefficients

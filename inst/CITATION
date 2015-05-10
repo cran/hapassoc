@@ -10,7 +10,7 @@ citEntry(entry="Article",
          volume      = 57,
          year         = 2004,
          pages       ="200--206",
-         url          = "http://stat-db.stat.sfu.ca/hapassoc",
+         url          = "http://stat.sfu.ca/statgen/research/hapassoc.html",
 
          textVersion =
        paste("Burkett K, McNeney B and Graham J (2004).",                 
@@ -30,7 +30,7 @@ citEntry(entry="Article",
          number = 2,
          year         = 2006,
          pages       ="1--19",
-         url          = "http://stat-db.stat.sfu.ca/hapassoc",
+         url          = "http://stat.sfu.ca/statgen/research/hapassoc.html",
 
          textVersion =
        paste("Burkett K, Graham J and McNeney B (2006).",

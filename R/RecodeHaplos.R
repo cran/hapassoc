@@ -51,9 +51,9 @@ RecodeHaplos<-function(dat,numSNPs,allelic,maxMissingGenos=1, verbose=TRUE) {
        cat(paste("Remaining variables are: \n",paste(names(dat)[1:(ncols-2*numSNPs)],collapse=", "),"\n"))
       }
   }
-  # Substitue empty strings "" with NA:
+  # Substitute empty strings "" with NA:
   for(i in (ncols-2*numSNPs+1):ncols) {
-      dat[nchar(as.vector(dat[,i]))==0,i]<-NA
+      dat[!nzchar(as.vector(dat[,i])),i]<-NA
   }
   nonsnpcols<-ncols-2*numSNPs
   snpcols<-ncols-nonsnpcols
