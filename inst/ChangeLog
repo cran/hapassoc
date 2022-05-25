@@ -1,3 +1,7 @@
+2022-05-24 Version 1.2-9
+* Modifications to the package to conform with current CRAN requirements. 
+  Also updated url's
+
 2015-05-08 Version 1.2-8
 * Modifications to the package so that it works with upcoming R changes to 
   nchar(). Also updates to email addresses and url's.

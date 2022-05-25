@@ -1,5 +1,5 @@
 Package: hapassoc
-Version: 1.2-8
+Version: 1.2-9
 Title: Inference of Trait Associations with SNP Haplotypes and Other
         Attributes using the EM Algorithm
 Author: K. Burkett <kburkett@uottawa.ca>, B. McNeney <mcneney@sfu.ca>, J.
@@ -14,8 +14,8 @@ Description: The following R functions are used for inference of trait
         studies. They can accommodate uncertain haplotype phase and
         handle missing genotypes at some SNPs.
 License: GPL-2
-URL: http://stat.sfu.ca/statgen/research/hapassoc.html
-Packaged: 2015-05-10 13:42:05 UTC; kellyburkett
+URL: https://sfustatgen.github.io/research/hapassoc.html
 NeedsCompilation: yes
 Repository: CRAN
-Date/Publication: 2015-05-11 00:22:30
+Packaged: 2022-05-25 15:55:55 UTC; kellyburkett
+Date/Publication: 2022-05-25 20:10:02 UTC
